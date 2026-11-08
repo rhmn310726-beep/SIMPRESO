@@ -5,13 +5,15 @@ The project root is `SIMPRESO/` (the workspace opens at its parent). Run every c
 ## Stack
 
 - Laravel 13 skeleton (`laravel/framework ^13.17`), PHP 8.3+, Vite 8 + Tailwind 4, PHPUnit 12 (not Pest), Pint.
-- The app is still a bare skeleton: only `GET /` renders the `welcome` view. No API routes; health check is `/up`.
+- Frontend is Inertia v3 + React 19 + TypeScript (`inertiajs/inertia-laravel ^3.7`, `@inertiajs/react ^3.11`).
+- Only `GET /` exists, rendering the Inertia page `resources/js/pages/welcome.tsx`. No API routes; health check is `/up`.
 
 ## Commands
 
 - Initial setup or reset after dependency changes: `composer setup` (installs Composer deps, copies `.env`, generates key, migrates, runs `npm install --ignore-scripts`, builds assets).
 - Full dev loop (HTTP server + queue listener + Vite): `composer dev` (= `php artisan dev`). On Windows this fans out with `concurrently`.
-- Vite only: `npm run dev`; production assets: `npm run build`.
+- Vite only: `npm run dev`; production assets: `npm run build`; TypeScript check: `npm run typecheck`.
+- Inertia pages live in `resources/js/pages/` (kebab or PascalCase names; resolver matches `./pages/${name}.tsx`). Shared props go in `app/Http/Middleware/HandleInertiaRequests.php`.
 - Tests: `composer test` (clears config, then runs `php artisan test`).
   - Single test: `php artisan test --filter=ExampleTest` or `php artisan test tests/Feature/ExampleTest.php`.
 - Format: `vendor/bin/pint`; check without writing with `vendor/bin/pint --test`. No static analysis or JS test runner is configured.
