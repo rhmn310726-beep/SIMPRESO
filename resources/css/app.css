@@ -4,6 +4,53 @@
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Plus Jakarta Sans', 'Nunito', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --color-brand-50: #f0f7ff;
+    --color-brand-100: #e0efff;
+    --color-brand-200: #bae0fd;
+    --color-brand-300: #7cc4fa;
+    --color-brand-400: #38a4f5;
+    --color-brand-500: #1d72fe;
+    --color-brand-600: #1558e3;
+    --color-brand-700: #1044b8;
+    --color-brand-800: #123b93;
+    --color-brand-900: #133272;
+
+    --color-pharmacy-teal: #10b981;
+    --color-pharmacy-pill-blue: #2563eb;
+    --color-pharmacy-pill-red: #ef4444;
+    --color-pharmacy-soft-yellow: #fbbf24;
+    --color-pharmacy-bg-light: #edf5fd;
+    --color-pharmacy-surface: #ffffff;
+
+    --shadow-soft-card: 0 10px 30px -5px rgba(37, 99, 235, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+    --shadow-pill-btn: 0 8px 20px -3px rgba(29, 114, 254, 0.4);
+    --shadow-mascot-glow: 0 15px 35px -5px rgba(29, 114, 254, 0.2);
+
+    --animate-float: float-slow 4s ease-in-out infinite;
+    --animate-float-delayed: float-slow 4.5s ease-in-out infinite 1.5s;
+
+    @keyframes float-slow {
+        0%,
+        100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-8px);
+        }
+    }
+}
+
+@layer base {
+    body {
+        background-color: var(--color-pharmacy-bg-light);
+        color: #1e293b;
+        overflow-x: hidden;
+    }
+}
+
+@utility pharmacy-bg-gradient {
+    background: radial-gradient(circle at 85% 30%, #d8ecfd 0%, #ebf4fd 45%, #f4f9fe 100%);
 }
