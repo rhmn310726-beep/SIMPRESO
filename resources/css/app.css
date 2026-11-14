@@ -29,6 +29,123 @@
     --shadow-pill-btn: 0 8px 20px -3px rgba(29, 114, 254, 0.4);
     --shadow-mascot-glow: 0 15px 35px -5px rgba(29, 114, 254, 0.2);
 
+    /* Material 3 palette — admin shell (e-Resep design) */
+    --color-background: #faf8ff;
+    --color-on-background: #131b2e;
+    --color-surface: #faf8ff;
+    --color-on-surface: #131b2e;
+    --color-surface-variant: #dae2fd;
+    --color-on-surface-variant: #434655;
+    --color-surface-container-lowest: #ffffff;
+    --color-surface-container-low: #f2f3ff;
+    --color-surface-container: #eaedff;
+    --color-surface-container-high: #e2e7ff;
+    --color-surface-container-highest: #dae2fd;
+    --color-surface-bright: #faf8ff;
+    --color-surface-dim: #d2d9f4;
+    --color-surface-tint: #0053db;
+    --color-primary: #004ac6;
+    --color-on-primary: #ffffff;
+    --color-primary-container: #2563eb;
+    --color-on-primary-container: #eeefff;
+    --color-primary-fixed: #dbe1ff;
+    --color-primary-fixed-dim: #b4c5ff;
+    --color-on-primary-fixed: #00174b;
+    --color-on-primary-fixed-variant: #003ea8;
+    --color-inverse-primary: #b4c5ff;
+    --color-secondary: #006a61;
+    --color-on-secondary: #ffffff;
+    --color-secondary-container: #86f2e4;
+    --color-on-secondary-container: #006f66;
+    --color-secondary-fixed: #89f5e7;
+    --color-secondary-fixed-dim: #6bd8cb;
+    --color-on-secondary-fixed: #00201d;
+    --color-on-secondary-fixed-variant: #005049;
+    --color-tertiary: #6a1edb;
+    --color-on-tertiary: #ffffff;
+    --color-tertiary-container: #8343f4;
+    --color-on-tertiary-container: #f7edff;
+    --color-tertiary-fixed: #eaddff;
+    --color-tertiary-fixed-dim: #d2bbff;
+    --color-on-tertiary-fixed: #25005a;
+    --color-on-tertiary-fixed-variant: #5a00c6;
+    --color-error: #ba1a1a;
+    --color-on-error: #ffffff;
+    --color-error-container: #ffdad6;
+    --color-on-error-container: #93000a;
+    --color-outline: #737686;
+    --color-outline-variant: #c3c6d7;
+    --color-inverse-surface: #283044;
+    --color-inverse-on-surface: #eef0ff;
+
+    /* Named spacing scale (e-Resep design) */
+    --spacing-space-xs: 0.25rem;
+    --spacing-space-sm: 0.5rem;
+    --spacing-space-md: 1rem;
+    --spacing-space-lg: 1.5rem;
+    --spacing-space-xl: 2rem;
+    --spacing-space-2xl: 3rem;
+    --spacing-margin-sm: 1rem;
+    --spacing-margin: 2rem;
+    --spacing-gutter-sm: 1rem;
+    --spacing-gutter: 1.5rem;
+
+    /* Typography tokens (Inter) */
+    --font-display-lg: 'Inter', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-headline-lg: 'Inter', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-headline-md: 'Inter', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-headline-sm: 'Inter', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-body-lg: 'Inter', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-body-md: 'Inter', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-body-sm: 'Inter', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-label-md: 'Inter', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-label-sm: 'Inter', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-code-sm: 'Inter', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+
+    --text-display-lg: 32px;
+    --text-display-lg--line-height: 40px;
+    --text-display-lg--letter-spacing: -0.02em;
+    --text-display-lg--font-weight: 700;
+
+    --text-headline-lg: 24px;
+    --text-headline-lg--line-height: 32px;
+    --text-headline-lg--letter-spacing: -0.015em;
+    --text-headline-lg--font-weight: 600;
+
+    --text-headline-md: 20px;
+    --text-headline-md--line-height: 28px;
+    --text-headline-md--letter-spacing: -0.01em;
+    --text-headline-md--font-weight: 600;
+
+    --text-headline-sm: 16px;
+    --text-headline-sm--line-height: 24px;
+    --text-headline-sm--letter-spacing: -0.005em;
+    --text-headline-sm--font-weight: 600;
+
+    --text-body-lg: 16px;
+    --text-body-lg--line-height: 24px;
+
+    --text-body-md: 14px;
+    --text-body-md--line-height: 20px;
+
+    --text-body-sm: 12px;
+    --text-body-sm--line-height: 16px;
+
+    --text-label-md: 14px;
+    --text-label-md--line-height: 20px;
+    --text-label-md--letter-spacing: 0.005em;
+    --text-label-md--font-weight: 500;
+
+    --text-label-sm: 12px;
+    --text-label-sm--line-height: 16px;
+    --text-label-sm--letter-spacing: 0.01em;
+    --text-label-sm--font-weight: 600;
+
+    --text-code-sm: 12px;
+    --text-code-sm--line-height: 16px;
+    --text-code-sm--letter-spacing: 0.02em;
+    --text-code-sm--font-weight: 500;
+
     --animate-float: float-slow 4s ease-in-out infinite;
     --animate-float-delayed: float-slow 4.5s ease-in-out infinite 1.5s;
 

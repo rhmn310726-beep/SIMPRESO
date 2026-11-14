@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
@@ -24,13 +23,7 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
-        $target = match ($request->user()->role) {
-            Role::Dokter => route('dokter.daftar-pasien'),
-            Role::Farmasi => route('farmasi.antrean-resep'),
-            Role::Admin => route('admin.dashboard'),
-        };
-
-        return redirect()->intended($target);
+        return redirect()->intended(route($request->user()->dashboardRouteName()));
     }
 
     public function destroy(Request $request): RedirectResponse

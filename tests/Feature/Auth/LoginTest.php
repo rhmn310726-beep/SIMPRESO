@@ -45,6 +45,23 @@ class LoginTest extends TestCase
         }
     }
 
+    public function test_authenticated_users_are_redirected_away_from_login_page(): void
+    {
+        $destinations = [
+            Role::Dokter->value => 'dokter.daftar-pasien',
+            Role::Farmasi->value => 'farmasi.antrean-resep',
+            Role::Admin->value => 'admin.dashboard',
+        ];
+
+        foreach ($destinations as $role => $routeName) {
+            $user = User::factory()->create(['role' => $role]);
+
+            $this->actingAs($user)
+                ->get('/login')
+                ->assertRedirect(route($routeName));
+        }
+    }
+
     public function test_invalid_credentials_are_rejected(): void
     {
         $user = User::factory()->create(['role' => Role::Dokter]);

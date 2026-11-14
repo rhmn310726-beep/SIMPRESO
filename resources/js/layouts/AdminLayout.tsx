@@ -1,22 +1,22 @@
 import { Link, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
-import type { ComponentType, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import type { SharedProps } from '@/types';
 
 interface NavItem {
     label: string;
     href: string;
-    icon: ComponentType<{ className?: string }>;
+    icon: string;
 }
 
 const navItems: NavItem[] = [
-    { label: 'Dashboard', href: '/admin', icon: GridIcon },
-    { label: 'Data Obat', href: '/admin/obat', icon: PillIcon },
-    { label: 'Stok', href: '/admin/stok', icon: BoxIcon },
-    { label: 'Data Pasien', href: '/admin/pasien', icon: PatientIcon },
-    { label: 'Manajemen Pengguna', href: '/admin/akun', icon: UsersIcon },
-    { label: 'Aturan Alergi & Interaksi', href: '/admin/aturan', icon: WarningIcon },
-    { label: 'Laporan', href: '/admin/laporan', icon: ChartIcon },
+    { label: 'Dashboard', href: '/admin', icon: 'grid_view' },
+    { label: 'Data Obat', href: '/admin/obat', icon: 'medication' },
+    { label: 'Stok', href: '/admin/stok', icon: 'inventory_2' },
+    { label: 'Data Pasien', href: '/admin/pasien', icon: 'personal_injury' },
+    { label: 'Manajemen Pengguna', href: '/admin/akun', icon: 'manage_accounts' },
+    { label: 'Aturan Alergi & Interaksi', href: '/admin/aturan', icon: 'warning' },
+    { label: 'Laporan', href: '/admin/laporan', icon: 'query_stats' },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -55,84 +55,77 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     const user = auth.user;
 
     return (
-        <div className="min-h-screen bg-pharmacy-bg-light">
-            <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-slate-200/70 bg-white px-4 lg:hidden">
+        <div className="min-h-screen bg-background font-body-md text-on-surface antialiased">
+            <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-outline-variant/30 bg-surface-container-lowest px-4 lg:hidden">
                 <button
                     type="button"
                     onClick={() => setMenuOpen(true)}
                     aria-label="Buka menu navigasi"
-                    className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100"
+                    className="rounded-lg p-2 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
                 >
-                    <MenuIcon className="h-5 w-5" />
+                    <span className="material-symbols-outlined text-[20px]">menu</span>
                 </button>
-                <div className="flex items-center gap-2">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50">
-                        <BrandMark className="h-6 w-6" />
+                <div className="flex items-center gap-space-sm">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-container">
+                        <span className="material-symbols-outlined text-[24px] text-primary">local_pharmacy</span>
                     </div>
-                    <div>
-                        <p className="text-sm leading-tight font-extrabold tracking-tight text-brand-600">
-                            SIMPRESO
-                        </p>
-                        <p className="text-[10px] font-semibold text-slate-500">Admin Farmasi</p>
+                    <div className="flex flex-col">
+                        <span className="font-headline-sm text-headline-sm leading-tight font-bold tracking-tight text-primary">
+                            e-Resep
+                        </span>
+                        <span className="font-label-sm text-label-sm font-semibold text-secondary">Farmasi Admin</span>
                     </div>
                 </div>
-                <div className="w-9" />
+                <div className="w-10" />
             </header>
 
             {menuOpen && (
                 <div
-                    className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
+                    className="fixed inset-0 z-40 bg-inverse-surface/50 backdrop-blur-sm lg:hidden"
                     onClick={() => setMenuOpen(false)}
                 />
             )}
 
             <aside
-                className={`fixed top-0 left-0 z-50 flex h-full w-[260px] flex-col justify-between border-r border-slate-200/70 bg-white shadow-xl transition-transform duration-200 lg:translate-x-0 lg:shadow-none ${
+                className={`fixed top-0 left-0 z-50 flex h-full w-[260px] flex-col justify-between border-r border-outline-variant/30 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] transition-transform duration-200 lg:translate-x-0 ${
                     menuOpen ? 'translate-x-0' : '-translate-x-full'
                 }`}
             >
                 <div className="flex min-h-0 flex-1 flex-col">
-                    <div className="flex h-16 items-center gap-3 border-b border-slate-200/60 px-4">
-                        <Link
-                            href="/admin"
-                            className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50"
-                        >
-                            <BrandMark className="h-7 w-7" />
-                        </Link>
+                    <div className="flex h-16 flex-shrink-0 items-center gap-space-sm border-b border-outline-variant/20 px-space-md">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-container">
+                            <span className="material-symbols-outlined text-[24px] text-primary">local_pharmacy</span>
+                        </div>
                         <div className="flex flex-col">
-                            <span className="text-base leading-tight font-extrabold tracking-tight text-brand-600">
-                                SIMPRESO
+                            <span className="font-headline-sm text-headline-sm leading-tight font-bold tracking-tight text-primary">
+                                e-Resep
                             </span>
-                            <span className="text-[11px] font-semibold text-emerald-600">
-                                Admin Farmasi
-                            </span>
+                            <span className="font-label-sm text-label-sm font-semibold text-secondary">Farmasi Admin</span>
                         </div>
                     </div>
 
-                    <div className="px-4 pt-6 pb-1">
-                        <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+                    <div className="px-space-md pt-space-lg pb-space-xs">
+                        <span className="font-label-sm text-label-sm tracking-wider text-outline uppercase">
                             Menu Utama
                         </span>
                     </div>
 
-                    <nav className="flex flex-col gap-1 overflow-y-auto px-2 pb-4">
+                    <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-space-sm pb-space-md">
                         {navItems.map((item) => {
-                            const Icon = item.icon;
                             const active = isActive(item.href);
 
                             return (
                                 <Link
                                     key={item.href}
                                     href={item.href}
-                                    className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${
+                                    aria-current={active ? 'page' : undefined}
+                                    className={`flex items-center gap-space-sm rounded-lg px-space-sm py-2.5 font-label-md text-label-md transition-colors ${
                                         active
-                                            ? 'bg-brand-500 text-white shadow-sm'
-                                            : 'text-slate-600 hover:bg-brand-50 hover:text-brand-700'
+                                            ? 'bg-primary-container font-semibold text-on-primary shadow-sm'
+                                            : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
                                     }`}
                                 >
-                                    <Icon
-                                        className={`h-5 w-5 ${active ? 'text-white' : 'text-slate-400'}`}
-                                    />
+                                    <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
                                     <span className="truncate">{item.label}</span>
                                 </Link>
                             );
@@ -140,17 +133,17 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                     </nav>
                 </div>
 
-                <div className="border-t border-slate-200/60 p-3">
+                <div className="border-t border-outline-variant/20 p-space-md">
                     {user && (
-                        <div className="mb-3 flex items-center gap-3 px-1">
-                            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-brand-50 text-xs font-bold text-brand-600">
+                        <div className="mb-3 flex items-center gap-space-sm px-space-sm">
+                            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-surface-container font-label-sm text-label-sm font-bold text-primary">
                                 {initials(user.name)}
                             </div>
                             <div className="min-w-0">
-                                <p className="truncate text-sm font-semibold text-slate-800">
+                                <p className="truncate font-label-md text-label-md font-semibold text-on-surface">
                                     {user.name}
                                 </p>
-                                <p className="text-xs text-slate-500">Administrator</p>
+                                <p className="font-body-sm text-body-sm text-on-surface-variant">Administrator</p>
                             </div>
                         </div>
                     )}
@@ -159,16 +152,16 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                         href="/logout"
                         method="post"
                         as="button"
-                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
+                        className="flex w-full items-center gap-space-sm rounded-lg px-space-sm py-2.5 font-label-md text-label-md text-error transition-colors hover:bg-error-container hover:text-on-error-container"
                     >
-                        <LogoutIcon className="h-5 w-5" />
+                        <span className="material-symbols-outlined text-[20px]">logout</span>
                         <span>Keluar Sistem</span>
                     </Link>
                 </div>
             </aside>
 
             <div className="lg:pl-[260px]">
-                <main className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+                <main className="relative w-full bg-background px-4 py-6 sm:px-margin-sm lg:px-margin lg:py-margin">
                     {children}
                 </main>
             </div>
@@ -183,127 +176,4 @@ function initials(name: string): string {
         .slice(0, 2)
         .map((part) => part[0]?.toUpperCase() ?? '')
         .join('');
-}
-
-function BrandMark({ className }: { className?: string }) {
-    return (
-        <svg
-            className={`-rotate-45 ${className ?? ''}`}
-            fill="none"
-            viewBox="0 0 48 48"
-            xmlns="http://www.w3.org/2000/svg"
-        >
-            <path
-                d="M14 10C8.47715 10 4 14.4772 4 20V28C4 33.5228 8.47715 38 14 38H24V10H14Z"
-                fill="#FFFFFF"
-                stroke="#1D72FE"
-                strokeLinejoin="round"
-                strokeWidth="3.5"
-            />
-            <path
-                d="M24 10H34C39.5228 10 44 14.4772 44 20V28C44 33.5228 39.5228 38 34 38H24V10Z"
-                fill="#1D72FE"
-                stroke="#1D72FE"
-                strokeLinejoin="round"
-                strokeWidth="3.5"
-            />
-        </svg>
-    );
-}
-
-function MenuIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-    );
-}
-
-function GridIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <rect x="3" y="3" width="7.5" height="7.5" rx="1.5" />
-            <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5" />
-            <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5" />
-            <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5" />
-        </svg>
-    );
-}
-
-function PillIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <rect x="2.5" y="8.5" width="19" height="7" rx="3.5" transform="rotate(-45 12 12)" />
-            <path d="M8.5 8.5l7 7" strokeLinecap="round" />
-        </svg>
-    );
-}
-
-function BoxIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path
-                d="M21 8l-9-5-9 5m18 0v8l-9 5-9-5V8m18 0l-9 5m0 0L3 8m9 5v8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-        </svg>
-    );
-}
-
-function PatientIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <circle cx="12" cy="7" r="4" strokeLinecap="round" strokeLinejoin="round" />
-            <path
-                d="M5.5 21v-1a6.5 6.5 0 0113 0v1M9 12.5l3 3 3-3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-        </svg>
-    );
-}
-
-function UsersIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path
-                d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zm13 10v-2a4 4 0 00-3-3.9M16 3.1a4 4 0 010 7.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-        </svg>
-    );
-}
-
-function WarningIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path
-                d="M12 9v4m0 4h.01M10.3 4.3L2.7 17.6A1.5 1.5 0 004 20h16a1.5 1.5 0 001.3-2.4L13.7 4.3a2 2 0 00-3.4 0z"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-        </svg>
-    );
-}
-
-function ChartIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-    );
-}
-
-function LogoutIcon({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path
-                d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4m-5-4l4-4-4-4m4 4H3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-        </svg>
-    );
 }

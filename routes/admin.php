@@ -15,6 +15,8 @@ Route::middleware(['auth', 'role:admin'])
     ->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/akun', [UserController::class, 'index'])->name('akun.index');
+        Route::post('/akun', [UserController::class, 'store'])->name('akun.store');
+        Route::put('/akun/{user}', [UserController::class, 'update'])->name('akun.update');
         Route::post('/akun/{user}/reset-password', [UserController::class, 'resetPassword'])
             ->name('akun.reset-password');
         Route::get('/obat', [MedicineController::class, 'index'])->name('obat.index');

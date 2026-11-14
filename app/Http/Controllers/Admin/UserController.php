@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ResetUserPasswordRequest;
+use App\Http\Requests\Admin\StoreUserRequest;
+use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +32,36 @@ class UserController extends Controller
         return Inertia::render('admin/akun', [
             'users' => $users,
         ]);
+    }
+
+    public function store(StoreUserRequest $request): RedirectResponse
+    {
+        $data = $request->validated();
+
+        $user = User::query()->create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => $data['password'],
+            'role' => $data['role'],
+        ]);
+
+        return back()->with(
+            'success',
+            "Akun pengguna {$user->name} berhasil dibuat. Sampaikan password kepada user.",
+        );
+    }
+
+    public function update(UpdateUserRequest $request, User $user): RedirectResponse
+    {
+        $data = $request->validated();
+
+        $user->update([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'role' => $data['role'],
+        ]);
+
+        return back()->with('success', "Data pengguna {$user->name} berhasil diperbarui.");
     }
 
     public function resetPassword(ResetUserPasswordRequest $request, User $user): RedirectResponse

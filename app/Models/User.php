@@ -30,6 +30,15 @@ class User extends Authenticatable
         ];
     }
 
+    public function dashboardRouteName(): string
+    {
+        return match ($this->role) {
+            Role::Dokter => 'dokter.daftar-pasien',
+            Role::Farmasi => 'farmasi.antrean-resep',
+            Role::Admin => 'admin.dashboard',
+        };
+    }
+
     public function prescriptionsAsDoctor(): HasMany
     {
         return $this->hasMany(Prescription::class, 'doctor_id');

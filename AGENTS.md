@@ -2,6 +2,8 @@
 
 Panduan ini dibaca oleh AI coding assistant (Cursor, Copilot, Claude Code, dll.) sebelum mengubah kode. Baca dulu, jangan langsung menebak. Kalau ada yang tidak jelas, tanyakan ke user, jangan mengarang.
 
+**PENTING:** Aplikasi ada di dalam folder `SIMPRESO/`, bukan di root workspace. SEMUA command (composer, artisan, npm, phpunit) harus dijalankan dari dalam `SIMPRESO/`.
+
 ---
 
 ## 1. Tentang Proyek
@@ -36,6 +38,19 @@ Tujuan utama sistem:
 - Hanya rute GET / yang me-render resources/js/pages/welcome.tsx. Health check: /up.
 - Frontend pakai TypeScript strict — jangan pakai `any` tanpa alasan jelas.
 - Jangan pakai library tambahan tanpa persetujuan user.
+
+### Command wajib (dari folder SIMPRESO/)
+- Dev lengkap (HTTP server + queue + logs + Vite): `composer run dev`
+- Frontend saja: `npm run dev` · Build: `npm run build`
+- Typecheck TSX: `npm run typecheck` — WAJIB lolos setelah ubah file .tsx
+- Semua test: `php artisan test` (SQLite :memory:, tidak butuh PostgreSQL nyala)
+- Satu file test: `php artisan test tests/Feature/Admin/UserManagementTest.php`
+- Lint PHP: `vendor/bin/pint`
+- Urutan verifikasi yang benar: `npm run typecheck` → `npm run build` → `php artisan test`
+
+### Akun seed untuk development
+`php artisan db:seed` membuat 3 akun (password semua: `Simpreso123!`):
+- admin@simpreso.test (admin) · dokter@simpreso.test (dokter) · farmasi@simpreso.test (farmasi)
 
 ---
 
@@ -243,3 +258,28 @@ routes/
 ├── dokter.php
 ├── farmasi.php
 └── admin.php
+```
+
+---
+
+## 10. Sistem Desain UI (DUA SISTEM — JANGAN DICAMPUR)
+### Sistem A — Admin shell "e-Resep" (Material 3)
+- Dipakai oleh: `resources/js/layouts/AdminLayout.tsx` (navbar/sidebar semua halaman admin) dan `resources/js/pages/admin/akun.tsx` sebagai halaman percontohan.
+- Token M3 sudah didefinisikan di `resources/css/app.css` dalam blok `@theme`: warna (`bg-primary`, `text-on-surface-variant`, `bg-surface-container-lowest`, `bg-secondary-fixed`, dst.), spacing (`px-space-md`, `py-margin`), dan typography (`font-body-md`, `text-headline-lg`, `text-label-sm`, `font-code-sm`).
+- Ikon: Material Symbols Outlined — `<span className="material-symbols-outlined">icon_name</span>`. Font Inter + Material Symbols dimuat via link Google Fonts di `resources/views/app.blade.php`.
+- Sidebar admin: brand "e-Resep / Farmasi Admin", fixed 260px, item aktif = `bg-primary-container text-on-primary`, logout = POST `/logout` via Inertia `<Link method="post">`.
+- Halaman admin lain (dashboard, obat, stok, pasien, aturan, laporan) MASIH pakai kelas legacy — kalau user minta restyle, ikuti pola `akun.tsx` (token M3 + Material Symbols), jangan karang token baru.
+
+### Sistem B — Legacy (brand-* / pharmacy-* / slate)
+- Dipakai oleh: landing, auth, dokter, farmasi, dan halaman admin yang belum dimigrasi.
+- Font: Plus Jakarta Sans (bunny fonts di vite.config.js), ikon SVG inline di dalam file .tsx.
+
+### Aturan konversi mock HTML dari user
+User sering memberi mock HTML hasil generator AI (satu file HTML utuh dengan Tailwind CDN config, placeholder `{{DATA:SCREEN:SCREEN_X}}`, dan gambar `lh3.googleusercontent.com/aida-public/...`). Cara konversi yang benar:
+1. Token dari `tailwind.config` di mock sudah ada di `app.css` @theme — pakai langsung, JANGAN pasang Tailwind CDN atau tulis config JS.
+2. Placeholder `{{DATA:SCREEN:SCREEN_X}}` → ganti dengan route Inertia nyata (daftar route admin ada di `routes/admin.php`).
+3. JANGAN hotlink gambar dari mock — ganti dengan avatar inisial atau asset lokal.
+4. Fungsionalitas existing (form Inertia `useForm`, modal, flash message) WAJIB dipertahankan; mock hanya visual.
+5. Data yang tidak dikirim controller (SIP, unit, status akun, last login) jangan dikarang — hanya render props yang nyata ada, dan adaptasi kolom tabel sesuai data yang tersedia.
+6. Tombol tanpa backend route (mis. "Log Aktivitas User" di akun.tsx) boleh dibiarkan sebagai placeholder visual — sebutkan sebagai TODO ke user, jangan hapus diam-diam. Yang sudah fungsional di akun.tsx: "+ Tambah Pengguna Baru" (`POST /admin/akun`), edit ikon edit_note (`PUT /admin/akun/{user}`), dan reset password (`POST /admin/akun/{user}/reset-password`).
+7. Setelah konversi selesai: jalankan `npm run typecheck` → `npm run build` → `php artisan test`.
