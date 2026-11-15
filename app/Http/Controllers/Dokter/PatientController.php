@@ -29,9 +29,9 @@ class PatientController extends Controller
             ->withCount('allergies')
             ->when($search !== '', function (Builder $query) use ($search): void {
                 $query->where(function (Builder $query) use ($search): void {
-                    $query->where('name', 'like', "%{$search}%")
-                        ->orWhere('medical_record_number', 'like', "%{$search}%")
-                        ->orWhere('nik', 'like', "%{$search}%");
+                    $query->whereLike('name', "%{$search}%")
+                        ->orWhereLike('medical_record_number', "%{$search}%")
+                        ->orWhereLike('nik', "%{$search}%");
                 });
             })
             ->orderBy('name')

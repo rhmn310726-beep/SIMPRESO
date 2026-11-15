@@ -25,9 +25,9 @@ class PatientController extends Controller
             ->with('allergies:id,patient_id,allergen')
             ->when($search !== '', function ($query) use ($search): void {
                 $query->where(function ($query) use ($search): void {
-                    $query->where('name', 'like', "%{$search}%")
-                        ->orWhere('medical_record_number', 'like', "%{$search}%")
-                        ->orWhere('nik', 'like', "%{$search}%");
+                    $query->whereLike('name', "%{$search}%")
+                        ->orWhereLike('medical_record_number', "%{$search}%")
+                        ->orWhereLike('nik', "%{$search}%");
                 });
             })
             ->when($gender !== '', fn ($query) => $query->where('gender', $gender))

@@ -24,9 +24,9 @@ class MedicineController extends Controller
         $medicines = Medicine::query()
             ->when($search !== '', function ($query) use ($search): void {
                 $query->where(function ($query) use ($search): void {
-                    $query->where('name', 'like', "%{$search}%")
-                        ->orWhere('code', 'like', "%{$search}%")
-                        ->orWhere('active_ingredient', 'like', "%{$search}%");
+                    $query->whereLike('name', "%{$search}%")
+                        ->orWhereLike('code', "%{$search}%")
+                        ->orWhereLike('active_ingredient', "%{$search}%");
                 });
             })
             ->when($category !== '', fn ($query) => $query->where('category', $category))

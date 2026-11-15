@@ -28,9 +28,9 @@ class ClinicalRuleController extends Controller
         $allergyRules = AllergyRule::query()
             ->when($search !== '', function ($query) use ($search): void {
                 $query->where(function ($query) use ($search): void {
-                    $query->where('active_ingredient', 'like', "%{$search}%")
-                        ->orWhere('drug_group', 'like', "%{$search}%")
-                        ->orWhere('allergen_name', 'like', "%{$search}%");
+                    $query->whereLike('active_ingredient', "%{$search}%")
+                        ->orWhereLike('drug_group', "%{$search}%")
+                        ->orWhereLike('allergen_name', "%{$search}%");
                 });
             })
             ->when($severity !== '', fn ($query) => $query->where('severity', $severity))
@@ -55,9 +55,9 @@ class ClinicalRuleController extends Controller
             ])
             ->when($search !== '', function ($query) use ($search): void {
                 $query->where(function ($query) use ($search): void {
-                    $query->whereHas('medicineA', fn ($query) => $query->where('name', 'like', "%{$search}%"))
-                        ->orWhereHas('medicineB', fn ($query) => $query->where('name', 'like', "%{$search}%"))
-                        ->orWhere('recommendation', 'like', "%{$search}%");
+                    $query->whereHas('medicineA', fn ($query) => $query->whereLike('name', "%{$search}%"))
+                        ->orWhereHas('medicineB', fn ($query) => $query->whereLike('name', "%{$search}%"))
+                        ->orWhereLike('recommendation', "%{$search}%");
                 });
             })
             ->when($severity !== '', fn ($query) => $query->where('severity', $severity))

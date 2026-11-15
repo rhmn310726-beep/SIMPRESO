@@ -30,10 +30,10 @@ class StockController extends Controller
             ->with(['medicine:id,code,name,active_ingredient,category,unit,stock,minimum_stock,status,storage_location'])
             ->when($search !== '', function ($query) use ($search): void {
                 $query->where(function ($query) use ($search): void {
-                    $query->where('batch_number', 'like', "%{$search}%")
+                    $query->whereLike('batch_number', "%{$search}%")
                         ->orWhereHas('medicine', function ($query) use ($search): void {
-                            $query->where('name', 'like', "%{$search}%")
-                                ->orWhere('code', 'like', "%{$search}%");
+                            $query->whereLike('name', "%{$search}%")
+                                ->orWhereLike('code', "%{$search}%");
                         });
                 });
             })

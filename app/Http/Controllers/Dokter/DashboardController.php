@@ -43,9 +43,9 @@ class DashboardController extends Controller
             ->withExists(['prescriptions as has_prescription_today' => $prescribedToday])
             ->when($search !== '', function (Builder $query) use ($search): void {
                 $query->where(function (Builder $query) use ($search): void {
-                    $query->where('name', 'like', "%{$search}%")
-                        ->orWhere('medical_record_number', 'like', "%{$search}%")
-                        ->orWhere('nik', 'like', "%{$search}%");
+                    $query->whereLike('name', "%{$search}%")
+                        ->orWhereLike('medical_record_number', "%{$search}%")
+                        ->orWhereLike('nik', "%{$search}%");
                 });
             })
             ->when($gender !== '', fn (Builder $query) => $query->where('gender', $gender));
