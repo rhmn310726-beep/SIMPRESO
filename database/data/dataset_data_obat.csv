@@ -1,0 +1,51 @@
+﻿Kode Obat,Nama Obat,Bahan Aktif,Kategori Farmakologi,Bentuk Sediaan,Kekuatan / Dosis,Stok Awal,Stok Minimum (Buffer),Lokasi Rak / Bin,Status Ketersediaan,Catatan / Peringatan Khusus
+OBT-001,Paracetamol 500 mg,Paracetamol,Analgesik & Antipiretik,Tablet,500 mg,250,30,Rak A-01 / Bin 01,Aktif,Simpan pada suhu ruang; hindari kelembapan.
+OBT-002,Paracetamol Sirup,Paracetamol,Analgesik & Antipiretik,Sirup,120 mg/5 mL,80,10,Rak A-01 / Bin 02,Aktif,Kocok sebelum digunakan.
+OBT-003,Ibuprofen 200 mg,Ibuprofen,Antiinflamasi Nonsteroid (NSAID),Tablet,200 mg,180,25,Rak A-01 / Bin 03,Aktif,Perhatikan peringatan penggunaan pada kemasan.
+OBT-004,Asam Mefenamat 500 mg,Asam mefenamat,Antiinflamasi Nonsteroid (NSAID),Tablet,500 mg,120,20,Rak A-01 / Bin 04,Aktif,Perhatikan peringatan penggunaan pada kemasan.
+OBT-005,Amoksisilin 500 mg,Amoksisilin,Antibiotik,Kapsul,500 mg,200,30,Rak B-01 / Bin 01,Aktif,Antibiotik; penyimpanan dan penggunaan sesuai petunjuk.
+OBT-006,Amoksisilin Sirup Kering,Amoksisilin,Antibiotik,Suspensi,125 mg/5 mL,45,8,Rak B-01 / Bin 02,Aktif,"Setelah rekonstitusi, ikuti petunjuk penyimpanan pada kemasan."
+OBT-007,Azitromisin 500 mg,Azitromisin,Antibiotik,Tablet,500 mg,90,15,Rak B-01 / Bin 03,Aktif,Antibiotik; penggunaan sesuai resep/petunjuk tenaga kesehatan.
+OBT-008,Sefiksim 100 mg,Sefiksim,Antibiotik,Kapsul,100 mg,75,12,Rak B-01 / Bin 04,Aktif,Antibiotik; penggunaan sesuai resep/petunjuk tenaga kesehatan.
+OBT-009,Cetirizine 10 mg,Cetirizine,Antihistamin,Tablet,10 mg,160,20,Rak C-01 / Bin 01,Aktif,Dapat menyebabkan kantuk pada sebagian orang.
+OBT-010,Loratadine 10 mg,Loratadine,Antihistamin,Tablet,10 mg,140,20,Rak C-01 / Bin 02,Aktif,Simpan pada suhu ruang.
+OBT-011,CTM 4 mg,Klorfeniramin maleat,Antihistamin,Tablet,4 mg,100,15,Rak C-01 / Bin 03,Aktif,Dapat menyebabkan kantuk.
+OBT-012,Antasida DOEN,Aluminium hidroksida; magnesium hidroksida,Antasida,Tablet kunyah,200 mg; 200 mg,130,20,Rak C-01 / Bin 04,Aktif,Pisahkan dari beberapa obat lain sesuai petunjuk penggunaan.
+OBT-013,Omeprazole 20 mg,Omeprazole,Penghambat Pompa Proton (PPI),Kapsul,20 mg,110,15,Rak C-02 / Bin 01,Aktif,Simpan dalam kemasan asli.
+OBT-014,Lansoprazole 30 mg,Lansoprazole,Penghambat Pompa Proton (PPI),Kapsul,30 mg,85,12,Rak C-02 / Bin 02,Aktif,Simpan dalam kemasan asli.
+OBT-015,Amlodipine 5 mg,Amlodipine,Antihipertensi,Tablet,5 mg,190,25,Rak D-01 / Bin 01,Aktif,Obat resep; simpan sesuai petunjuk kemasan.
+OBT-016,Captopril 25 mg,Captopril,Antihipertensi,Tablet,25 mg,150,20,Rak D-01 / Bin 02,Aktif,Obat resep; simpan sesuai petunjuk kemasan.
+OBT-017,Valsartan 80 mg,Valsartan,Antihipertensi,Tablet,80 mg,100,15,Rak D-01 / Bin 03,Aktif,Obat resep; simpan sesuai petunjuk kemasan.
+OBT-018,Metformin 500 mg,Metformin,Antidiabetes,Tablet,500 mg,220,30,Rak D-02 / Bin 01,Aktif,Obat resep; simpan sesuai petunjuk kemasan.
+OBT-019,Glimepiride 2 mg,Glimepiride,Antidiabetes,Tablet,2 mg,95,15,Rak D-02 / Bin 02,Aktif,Obat resep; perhatikan risiko hipoglikemia.
+OBT-020,Simvastatin 10 mg,Simvastatin,Antihiperlipidemia,Tablet,10 mg,125,18,Rak D-02 / Bin 03,Aktif,Obat resep; simpan sesuai petunjuk kemasan.
+OBT-021,Salbutamol 2 mg,Salbutamol,Bronkodilator,Tablet,2 mg,70,10,Rak E-01 / Bin 01,Aktif,Simpan pada suhu ruang.
+OBT-022,Salbutamol Inhaler,Salbutamol,Bronkodilator,Inhaler,100 mcg/dosis,35,6,Rak E-01 / Bin 02,Aktif,Jauhkan dari panas berlebih.
+OBT-023,Ambroxol 30 mg,Ambroxol,Mukolitik,Tablet,30 mg,115,15,Rak E-01 / Bin 03,Aktif,Simpan pada suhu ruang.
+OBT-024,Dextromethorphan Sirup,Dextromethorphan,Antitusif,Sirup,15 mg/5 mL,50,8,Rak E-01 / Bin 04,Aktif,Perhatikan batas usia dan petunjuk pada kemasan.
+OBT-025,Domperidone 10 mg,Domperidone,Antiemetik,Tablet,10 mg,90,12,Rak E-02 / Bin 01,Aktif,Perhatikan peringatan dan petunjuk penggunaan.
+OBT-026,Ondansetron 4 mg,Ondansetron,Antiemetik,Tablet,4 mg,65,10,Rak E-02 / Bin 02,Aktif,Obat resep; simpan sesuai petunjuk kemasan.
+OBT-027,Oralit,Natrium klorida; kalium klorida; komponen elektrolit,Larutan Rehidrasi Oral,Serbuk,Sesuai kemasan,180,25,Rak F-01 / Bin 01,Aktif,Lindungi dari kelembapan.
+OBT-028,Zinc 20 mg,Zinc,Mineral & Suplemen,Tablet dispersibel,20 mg,150,20,Rak F-01 / Bin 02,Aktif,Simpan pada suhu ruang.
+OBT-029,Vitamin C 500 mg,Asam askorbat,Vitamin & Suplemen,Tablet,500 mg,200,25,Rak F-01 / Bin 03,Aktif,Simpan terlindung dari cahaya dan kelembapan.
+OBT-030,Vitamin B Kompleks,Vitamin B kompleks,Vitamin & Suplemen,Tablet,Sesuai kemasan,130,20,Rak F-01 / Bin 04,Aktif,Simpan pada suhu ruang.
+OBT-031,"Dexamethasone 0,5 mg",Dexamethasone,Kortikosteroid,Tablet,"0,5 mg",80,12,Rak G-01 / Bin 01,Aktif,Obat resep; penggunaan sesuai petunjuk tenaga kesehatan.
+OBT-032,Prednisone 5 mg,Prednisone,Kortikosteroid,Tablet,5 mg,75,10,Rak G-01 / Bin 02,Aktif,Obat resep; penggunaan sesuai petunjuk tenaga kesehatan.
+OBT-033,Betamethasone Krim,Betamethasone,Kortikosteroid Topikal,Krim,"0,1%",40,6,Rak G-01 / Bin 03,Aktif,Untuk pemakaian luar; hindari kontak dengan mata.
+OBT-034,Gentamicin Salep Kulit,Gentamicin,Antibiotik Topikal,Salep,"0,1%",35,6,Rak G-01 / Bin 04,Aktif,Untuk pemakaian luar; ikuti petunjuk penyimpanan.
+OBT-035,Povidone Iodine,Povidone iodine,Antiseptik,Larutan,10%,60,10,Rak G-02 / Bin 01,Aktif,Untuk pemakaian luar.
+OBT-036,Chloramphenicol Tetes Mata,Kloramfenikol,Antibiotik Oftalmik,Tetes mata,"0,5%",25,5,Lemari Khusus / Bin 01,Aktif,Jaga kebersihan ujung wadah; ikuti batas penggunaan setelah dibuka.
+OBT-037,Cendo Xitrol Tetes Mata,Dexamethasone; neomycin; polymyxin B,Kortikosteroid & Antibiotik Oftalmik,Tetes mata,Sesuai kemasan,20,4,Lemari Khusus / Bin 02,Ditangguhkan,Contoh data; verifikasi penyimpanan dan status produk sebelum digunakan.
+OBT-038,"NaCl 0,9%",Natrium klorida,Larutan Elektrolit,Infus,"0,9%",90,15,Rak H-01 / Bin 01,Aktif,Periksa keutuhan kemasan dan kejernihan larutan.
+OBT-039,Ringer Laktat,Natrium; kalium; kalsium; laktat,Larutan Elektrolit,Infus,Sesuai kemasan,70,12,Rak H-01 / Bin 02,Aktif,Periksa keutuhan kemasan dan kejernihan larutan.
+OBT-040,Lidocaine 2%,Lidocaine,Anestesi Lokal,Injeksi,2%,30,5,Rak H-02 / Bin 01,Aktif,Simpan dan tangani sesuai petunjuk produk.
+OBT-041,Furosemide 40 mg,Furosemide,Diuretik,Tablet,40 mg,100,15,Rak D-03 / Bin 01,Aktif,Obat resep; simpan sesuai petunjuk kemasan.
+OBT-042,Spironolactone 25 mg,Spironolactone,Diuretik Hemat Kalium,Tablet,25 mg,85,12,Rak D-03 / Bin 02,Aktif,Obat resep; simpan sesuai petunjuk kemasan.
+OBT-043,Allopurinol 100 mg,Allopurinol,Antihiperurisemia,Tablet,100 mg,90,12,Rak D-03 / Bin 03,Aktif,Obat resep; simpan sesuai petunjuk kemasan.
+OBT-044,Metoclopramide 10 mg,Metoclopramide,Antiemetik,Tablet,10 mg,75,10,Rak E-02 / Bin 03,Aktif,Perhatikan peringatan dan petunjuk penggunaan.
+OBT-045,Miconazole Krim 2%,Miconazole,Antijamur,Krim,2%,45,7,Rak G-02 / Bin 02,Aktif,Untuk pemakaian luar.
+OBT-046,Acyclovir 200 mg,Acyclovir,Antivirus,Tablet,200 mg,60,10,Rak G-02 / Bin 03,Aktif,Obat resep; simpan sesuai petunjuk kemasan.
+OBT-047,Nystatin Suspensi,Nystatin,Antijamur,Suspensi,100.000 IU/mL,30,5,Rak G-02 / Bin 04,Aktif,Kocok bila tercantum pada petunjuk produk.
+OBT-048,Diclofenac Gel 1%,Diclofenac,Antiinflamasi Nonsteroid (NSAID) Topikal,Gel,1%,40,6,Rak A-02 / Bin 01,Aktif,Untuk pemakaian luar; hindari kontak dengan mata.
+OBT-049,Ketoconazole 200 mg,Ketoconazole,Antijamur,Tablet,200 mg,55,8,Rak G-03 / Bin 01,Ditangguhkan,Contoh data; verifikasi status produk dan ketentuan penggunaan.
+OBT-050,Asam Folat 1 mg,Asam folat,Vitamin & Suplemen,Tablet,1 mg,140,20,Rak F-02 / Bin 01,Aktif,Simpan pada suhu ruang.

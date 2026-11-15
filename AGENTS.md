@@ -55,6 +55,24 @@ Tujuan utama sistem:
 `php artisan db:seed` membuat 3 akun (password semua: `Simpreso123!`):
 - admin@simpreso.test (admin) · dokter@simpreso.test (dokter) · farmasi@simpreso.test (farmasi)
 
+### Impor dataset awal (CSV)
+Dataset contoh ada di `database/data/`: `dataset_data_pasien.csv` dan `dataset_data_obat.csv`.
+
+```bash
+# Cek dulu tanpa menulis ke database
+php artisan import:patients database/data/dataset_data_pasien.csv --dry-run
+php artisan import:medicines database/data/dataset_data_obat.csv --dry-run
+
+# Impor sungguhan (idempotent: No. RM / kode obat yang sudah ada akan dilewati)
+php artisan import:patients database/data/dataset_data_pasien.csv
+php artisan import:medicines database/data/dataset_data_obat.csv
+```
+
+- Parser: `App\Support\CsvDatasetReader` — auto-deteksi delimiter (`,`/`;`/tab), buang BOM, perbaiki encoding, dan menerima header Indonesia maupun Inggris (lihat `COLUMN_ALIASES` di masing-masing command). Paksa delimiter dengan `--delimiter=;` bila auto-deteksi keliru.
+- `import:patients`: wajib ada No. Rekam Medis, Nama Lengkap, dan Jenis Kelamin (L/P, Laki-laki, Perempuan). Jika kolom tanggal lahir kosong, `date_of_birth` dihitung dari kolom Usia. Kolom alergi dipecah per koma/titik koma; nilai "Tidak ada" diabaikan, alergi duplikat (case-insensitive) tidak dicatat dua kali.
+- `import:medicines`: wajib Nama Obat, Bahan Aktif, Kategori, Bentuk Sediaan, dan Stok. Setiap obat baru otomatis dibuatkan batch stok awal lewat `StockService::createInitialBatch`. Status "Ditangguhkan/Suspend/Ditarik" dipetakan menjadi `nonaktif`; kode kosong dibuat otomatis `OBT-###`.
+- Laporan akhir menampilkan total baris, dibuat, dilewati (duplikat), dan ditolak beserta alasannya (maksimal 50 baris ditampilkan).
+
 ---
 
 ## 3. Peran Pengguna & Hak Akses
@@ -195,7 +213,7 @@ Aturan transisi:
 - PHPUnit 12, bukan Pest. Jangan buat file *.pest.php.
 - Test ada di tests/Feature/ dan tests/Unit/.
 - Test pakai SQLite :memory: — jangan hardcode PostgreSQL di test.
-- Test yang ada saat ini: `tests/Feature/Admin/*`, `tests/Feature/Auth/*`, `tests/Feature/Dokter/*`, `tests/Feature/Farmasi/*`, dan dua ExampleTest.
+- Test yang ada saat ini: `tests/Feature/Admin/*`, `tests/Feature/Auth/*`, `tests/Feature/Console/*`, `tests/Feature/Dokter/*`, `tests/Feature/Farmasi/*`, dan dua ExampleTest.
 - Setiap fitur kritis (serah terima, pengurangan stok, alergi, interaksi) wajib punya feature test.
 
 ### 7.4 Git & Commit
@@ -222,6 +240,7 @@ Aturan transisi:
 ## 9. Struktur yang Ada (verifikasi ulang sebelum berasumsi)
 ```text
 app/
+├── Console/Commands/ ImportPatientsCommand, ImportMedicinesCommand (impor dataset CSV)
 ├── Enums/            Gender, InteractionSeverity, MedicineStatus, PrescriptionStatus, Role, StockMovementType
 ├── Http/Controllers/ Admin/*, Auth/*, Dokter/DashboardController, Dokter/PatientController,
 │                     Dokter/PrescriptionController, Farmasi/DashboardController,
@@ -230,8 +249,9 @@ app/
 ├── Http/Requests/    Admin/*, Auth/*, Dokter/* (termasuk StoreBulkPrescriptionRequest)
 ├── Models/           User, Patient, Medicine, Allergy, AllergyRule, DrugInteraction,
 │                     Prescription, PrescriptionItem, StockBatch, StockMovement
-└── Services/         StockService, PrescriptionService (generator nomor + create resep;
-                      AllergyChecker/InteractionChecker/HandoverService BELUM ada)
+├── Services/         StockService, PrescriptionService (generator nomor + create resep;
+│                     AllergyChecker/InteractionChecker/HandoverService BELUM ada)
+└── Support/          CsvDatasetReader (parser CSV untuk command impor)
 
 resources/js/
 ├── components/landing/*
