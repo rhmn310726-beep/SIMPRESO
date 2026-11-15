@@ -34,7 +34,7 @@ class User extends Authenticatable
     {
         return match ($this->role) {
             Role::Dokter => 'dokter.daftar-pasien',
-            Role::Farmasi => 'farmasi.antrean-resep',
+            Role::Farmasi => 'farmasi.dashboard',
             Role::Admin => 'admin.dashboard',
         };
     }

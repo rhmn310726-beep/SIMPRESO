@@ -35,8 +35,11 @@ Tujuan utama sistem:
 - Alias import: @ → resources/js
 
 ### Catatan stack
-- Hanya rute GET / yang me-render resources/js/pages/welcome.tsx. Health check: /up.
+- Route dipecah per file: `web.php` (landing), `auth.php`, `dokter.php`, `farmasi.php`, `admin.php`. Semua di-load di `bootstrap/app.php`, lalu diberi prefix + middleware `role:*`. Health check: `/up`.
+- Redirect setelah login memakai `User::dashboardRouteName()`: dokter → `dokter.daftar-pasien`, farmasi → `farmasi.dashboard`, admin → `admin.dashboard`.
+- Route farmasi: `GET /farmasi` (`farmasi.dashboard`, `Farmasi\DashboardController@index`) dan `GET /farmasi/antrean-resep` (`farmasi.antrean-resep`, `Farmasi\QueueController@index`; halaman kerja masih placeholder).
 - Frontend pakai TypeScript strict — jangan pakai `any` tanpa alasan jelas.
+- Tidak ada ESLint/Prettier. Verifikasi frontend = `npm run typecheck`; jangan mengarang script lint.
 - Jangan pakai library tambahan tanpa persetujuan user.
 
 ### Command wajib (dari folder SIMPRESO/)
@@ -77,18 +80,20 @@ Aturan role (PENTING):
 Ini alur yang WAJIB diikuti. Jangan mengubah urutan tanpa persetujuan user.
 
 ### 4.1 Fase Dokter
-1. Dokter login → dashboard "Daftar Pasien".
-2. Dokter memilih pasien → halaman Detail Pasien.
-3. Dokter melihat alergi pasien; bisa menambah alergi jika belum tercatat.
-4. Dokter membuat resep di halaman Buat Resep:
-   - Pilih obat dari formularium (hanya obat berstatus aktif).
-   - Isi dosis, jumlah, aturan pakai.
-   - Sistem menampilkan peringatan alergi (merah) dan peringatan interaksi obat (oranye) secara real-time.
-5. Dokter menyimpan resep → status awal: menunggu.
+1. Dokter login → dashboard "Daftar Pasien" (`GET /dokter`, route `dokter.daftar-pasien`).
+2. Dokter memilih pasien dari tabel dashboard, atau membuka menu Detail Pasien (`GET /dokter/pasien`) untuk mencari/memilih pasien → halaman Detail Pasien (`GET /dokter/pasien/{patient}`).
+3. Dokter melihat alergi pasien; bisa menambah/menghapus alergi jika belum tercatat.
+4. Dokter membuat resep melalui dua jalur:
+   - Modal cepat "Buat Resep" di halaman Detail Pasien: satu item obat per submit.
+   - Halaman Buat Resep (`GET /dokter/resep`, route `dokter.resep.create`) untuk resep multi-item. Jika belum ada pasien, halaman menampilkan pencarian/pemilihan pasien; pasien terpilih memakai query `?patient={id}`. Halaman memuat formularium obat aktif, stok, alergi pasien, aturan alergi, dan interaksi obat.
+   - Dokter memilih obat dari formularium (hanya obat berstatus aktif; stok 0 tampil tetapi tidak bisa dipilih), mengisi dosis, jumlah, aturan pakai, dan catatan farmasi maksimal 250 karakter.
+   - Peringatan alergi/interaksi tampil non-blocking; tombol "Simpan sebagai Draft" masih placeholder karena belum ada status draft.
+5. Dokter menyimpan resep (`POST /dokter/resep`, `Dokter\PrescriptionController@store`) → status awal: menunggu; stok TIDAK dikurangi. Pembuatan resep dan nomor `RX-###` memakai `App\Services\PrescriptionService` yang juga dipakai modal cepat.
 6. Resep otomatis masuk antrean farmasi.
+- Dokter dapat memantau resep yang sudah dibuat melalui Riwayat Resep (`GET /dokter/riwayat-resep`, route `dokter.riwayat-resep.index`) dan mengunduh CSV dengan filter yang sama (`GET /dokter/riwayat-resep/export`).
 
 ### 4.2 Fase Farmasi
-7. Petugas farmasi melihat Antrean Resep (kanban 4 kolom).
+7. Petugas farmasi login → Dashboard Farmasi (`GET /farmasi`, route `farmasi.dashboard`) yang menampilkan KPI dan kanban 4 kolom. Halaman kerja Antrean Resep tersedia di `GET /farmasi/antrean-resep` (`farmasi.antrean-resep`) dan masih placeholder.
 8. Petugas membuka Detail & Verifikasi Resep:
    - Melihat info pasien, daftar obat, stok, alergi, interaksi.
    - Checklist verifikasi wajib dicentang sebelum bisa menerima resep.
@@ -190,6 +195,7 @@ Aturan transisi:
 - PHPUnit 12, bukan Pest. Jangan buat file *.pest.php.
 - Test ada di tests/Feature/ dan tests/Unit/.
 - Test pakai SQLite :memory: — jangan hardcode PostgreSQL di test.
+- Test yang ada saat ini: `tests/Feature/Admin/*`, `tests/Feature/Auth/*`, `tests/Feature/Dokter/*`, `tests/Feature/Farmasi/*`, dan dua ExampleTest.
 - Setiap fitur kritis (serah terima, pengurangan stok, alergi, interaksi) wajib punya feature test.
 
 ### 7.4 Git & Commit
@@ -213,73 +219,76 @@ Aturan transisi:
 
 ---
 
-## 9. Struktur Folder yang Diharapkan
+## 9. Struktur yang Ada (verifikasi ulang sebelum berasumsi)
 ```text
 app/
-├── Enums/
-│   └── PrescriptionStatus.php
-├── Http/
-│   ├── Controllers/
-│   │   ├── Dokter/
-│   │   ├── Farmasi/
-│   │   └── Admin/
-│   ├── Middleware/
-│   │   └── EnsureRole.php
-│   └── Requests/
-├── Models/
-│   ├── User.php
-│   ├── Patient.php
-│   ├── Medicine.php
-│   ├── Prescription.php
-│   ├── PrescriptionItem.php
-│   ├── Allergy.php
-│   ├── DrugInteraction.php
-│   └── StockMovement.php
-└── Services/
-    ├── AllergyChecker.php
-    ├── InteractionChecker.php
-    └── HandoverService.php
+├── Enums/            Gender, InteractionSeverity, MedicineStatus, PrescriptionStatus, Role, StockMovementType
+├── Http/Controllers/ Admin/*, Auth/*, Dokter/DashboardController, Dokter/PatientController,
+│                     Dokter/PrescriptionController, Farmasi/DashboardController,
+│                     Farmasi/QueueController, LandingController
+├── Http/Middleware/  EnsureRole (alias `role`), HandleInertiaRequests (share auth.user + flash)
+├── Http/Requests/    Admin/*, Auth/*, Dokter/* (termasuk StoreBulkPrescriptionRequest)
+├── Models/           User, Patient, Medicine, Allergy, AllergyRule, DrugInteraction,
+│                     Prescription, PrescriptionItem, StockBatch, StockMovement
+└── Services/         StockService, PrescriptionService (generator nomor + create resep;
+                      AllergyChecker/InteractionChecker/HandoverService BELUM ada)
 
 resources/js/
-├── components/
-├── layouts/
-├── pages/
-│   ├── auth/
-│   │   ├── login.tsx
-│   │   └── forgot-password.tsx
-│   ├── dokter/
-│   ├── farmasi/
-│   └── admin/
-└── types/
+├── components/landing/*
+├── layouts/          AdminLayout.tsx (M3 admin), DokterLayout.tsx (M3 dokter),
+│                     FarmasiLayout.tsx (M3 farmasi), RoleLayout.tsx (legacy)
+├── pages/            admin/*, auth/*, dokter/daftar-pasien.tsx, dokter/pilih-pasien.tsx,
+│                     dokter/detail-pasien.tsx, dokter/buat-resep.tsx, dokter/riwayat-resep.tsx,
+│                     farmasi/dashboard.tsx, farmasi/antrean-resep.tsx, welcome.tsx
+└── types/index.ts    Role, AuthUser, SharedProps
 
-routes/
-├── web.php
-├── auth.php
-├── dokter.php
-├── farmasi.php
-└── admin.php
+routes/               web.php, auth.php, dokter.php, farmasi.php, admin.php
 ```
+
+Catatan: `dokter/daftar-pasien.tsx` adalah dashboard dokter (M3) berbasis data nyata dari `Dokter\DashboardController`; `dokter/pilih-pasien.tsx` adalah halaman cari/pilih pasien untuk masuk ke detail; `dokter/detail-pasien.tsx` adalah detail pasien + aksi alergi/resep dari `Dokter\PatientController`; `dokter/buat-resep.tsx` adalah halaman resep multi-item dari `Dokter\PrescriptionController`; `dokter/riwayat-resep.tsx` adalah riwayat resep dokter dari `Dokter\PrescriptionController@history`; `farmasi/dashboard.tsx` adalah dashboard farmasi M3 berbasis data nyata dari `Farmasi\DashboardController`; `farmasi/antrean-resep.tsx` sudah memakai `FarmasiLayout` tetapi masih placeholder.
 
 ---
 
-## 10. Sistem Desain UI (DUA SISTEM — JANGAN DICAMPUR)
+## 10. Sistem Desain UI (JANGAN CAMPUR)
 ### Sistem A — Admin shell "e-Resep" (Material 3)
-- Dipakai oleh: `resources/js/layouts/AdminLayout.tsx` (navbar/sidebar semua halaman admin) dan `resources/js/pages/admin/akun.tsx` sebagai halaman percontohan.
-- Token M3 sudah didefinisikan di `resources/css/app.css` dalam blok `@theme`: warna (`bg-primary`, `text-on-surface-variant`, `bg-surface-container-lowest`, `bg-secondary-fixed`, dst.), spacing (`px-space-md`, `py-margin`), dan typography (`font-body-md`, `text-headline-lg`, `text-label-sm`, `font-code-sm`).
+- Dipakai oleh `resources/js/layouts/AdminLayout.tsx`; SEMUA halaman `pages/admin/*` (dashboard, obat, stok, pasien, akun, aturan, laporan) sudah memakainya.
+- Token M3 ada di `resources/css/app.css` blok `@theme` (prefix `--color-*`, `--spacing-*`, `--font-*`, `--text-*`). Pakai langsung: `bg-primary`, `text-on-surface-variant`, `bg-surface-container-lowest`, `px-space-md`, `font-body-md`, `text-headline-lg`, `font-label-sm`; jangan menambah token baru di `@theme`.
 - Ikon: Material Symbols Outlined — `<span className="material-symbols-outlined">icon_name</span>`. Font Inter + Material Symbols dimuat via link Google Fonts di `resources/views/app.blade.php`.
 - Sidebar admin: brand "e-Resep / Farmasi Admin", fixed 260px, item aktif = `bg-primary-container text-on-primary`, logout = POST `/logout` via Inertia `<Link method="post">`.
-- Halaman admin lain (dashboard, obat, stok, pasien, aturan, laporan) MASIH pakai kelas legacy — kalau user minta restyle, ikuti pola `akun.tsx` (token M3 + Material Symbols), jangan karang token baru.
+
+### Sistem A' — Doctor shell "e-Resep / Portal Dokter" (Material 3)
+- Target: mock HTML "Portal Dokter" dari user. Brand sidebar "e-Resep / Portal Dokter"; menu Dashboard, Detail Pasien, Buat Resep, Riwayat Resep; header breadcrumb "Sistem Resep Elektronik / Rawat Jalan RS"; user + badge "Dokter".
+- `resources/js/layouts/DokterLayout.tsx` sudah ada (sidebar + header M3, responsive, logout POST `/logout`). JANGAN mengubah brand `AdminLayout` ("Farmasi Admin") dan jangan memakai kelas legacy `brand-*`/`pharmacy-*` di halaman dokter M3.
+- `pages/dokter/daftar-pasien.tsx` adalah dashboard dokter (greeting strip, 3 kartu metrik, tabel pasien, pagination, notifikasi) dan memakai `DokterLayout`. Route `GET /dokter` (`dokter.daftar-pasien`) → `Dokter\DashboardController@index` mengirim props `today`, `stats`, `patients`, `filters`, `status_counts`.
+- Sumber data nyata: "pasien hari ini" = `patients.created_at` hari ini (proxy, karena belum ada tabel kunjungan/antrean); status "Sudah Diresepkan" = pasien punya `prescriptions` hari ini dengan `doctor_id` = dokter login; "Belum Diresepkan" = `whereDoesntHave` relasi yang sama; nomor antrean = urutan `created_at, id` pada daftar hari ini. Metrik `stats`: total/done/pending pasien hari ini, progress persen, jumlah resep dokter hari ini, dan `waiting_pharmacy` (status `menunggu` milik dokter).
+- Kolom/filter "Poli" pada mock TIDAK ada di DB — sudah dihapus; filter pertama diganti Jenis Kelamin (`gender` L/P). Search server-side pada nama/No. RM/NIK, status `belum|sudah`, pagination 10/halaman via `withQueryString()`, refresh memakai `router.reload`.
+- `pages/dokter/pilih-pasien.tsx` (`GET /dokter/pasien`, `Dokter\PatientController@index`) adalah pintu masuk menu "Detail Pasien": daftar semua pasien dengan pencarian server-side (nama/No. RM/NIK), pagination 10, jumlah alergi, dan tombol "Lihat Detail".
+- `pages/dokter/detail-pasien.tsx` (`GET /dokter/pasien/{patient}`, `Dokter\PatientController@show`) menampilkan identitas pasien, alergi, dan riwayat resep 12 bulan terakhir. Field mock yang tidak ada di DB (BPJS, Poli, vitals, diagnosa, kunjungan terakhir, severity alergi) TIDAK dibuat/dikarang; "Terdaftar Sejak" memakai `patients.created_at`.
+- Aksi detail pasien: `PUT /dokter/pasien/{patient}` (edit demografi), `POST/DELETE .../alergi` (tambah/hapus alergi, duplikat case-insensitive ditolak), `POST .../resep` (buat resep cepat, satu item, nomor `RX-###`, status `menunggu`, stok tidak berkurang). Validasi di `app/Http/Requests/Dokter/*`; sukses memakai flash banner shared props, bukan modal sukses mock.
+- `pages/dokter/buat-resep.tsx` (`GET /dokter/resep`, `Dokter\PrescriptionController@create`) adalah halaman resep multi-item. Tanpa `?patient`, halaman menampilkan pencarian/pemilihan pasien (server-side nama/No. RM/NIK, pagination 8). Dengan pasien, halaman menampilkan kartu pasien, alergi, formularium obat aktif, modal pencarian/filter kategori/filter aman alergi, item obat dinamis (dosis/jumlah/signa), catatan maksimal 250 karakter, ringkasan sticky, serta peringatan alergi/interaksi non-blocking. Tombol "Simpan sebagai Draft" disabled karena tidak ada status draft.
+- Aksi halaman Buat Resep: `POST /dokter/resep` (`dokter.resep.store`) memvalidasi `patient_id`, 1–20 item, obat aktif, stok cukup, dan obat unik; membuat satu resep + banyak `prescription_items` lewat `PrescriptionService`, status `menunggu`, stok tidak berkurang, lalu redirect ke Detail Pasien dengan flash sukses. Field mock yang tidak ada di DB (BPJS, poli, kunjungan, produsen/FORNAS) TIDAK dibuat.
+- `pages/dokter/riwayat-resep.tsx` (`GET /dokter/riwayat-resep`, `Dokter\PrescriptionController@history`) menampilkan statistik bulan berjalan, tabel resep milik dokter login, filter server-side (search No. Resep/nama pasien, status, rentang `created_at`), pagination 10, dan drawer detail. Drawer memuat identitas pasien/dokter, item obat, catatan, serta timeline status. Timeline hanya menampilkan timestamp `created_at` dan `handover_confirmed_at`; waktu transisi status farmasi lainnya TIDAK dikarang karena tidak ada tabel histori status. Tombol "Buka Rekam Pasien" menuju `/dokter/pasien/{patient}`, "Resepkan Ulang" menuju `/dokter/resep?patient={id}`, dan "Export CSV" memakai `GET /dokter/riwayat-resep/export` dengan filter yang sama.
+- Sidebar mock: Dashboard ke `route('dokter.daftar-pasien')`; Detail Pasien ke `route('dokter.pasien.index')` (`/dokter/pasien`) dan aktif saat URL diawali `/dokter/pasien`; Buat Resep ke `/dokter/resep` dan aktif saat URL diawali `/dokter/resep`; Riwayat Resep ke `/dokter/riwayat-resep` dan aktif saat URL diawali `/dokter/riwayat-resep`; Keluar tetap POST `/logout`.
+- Nama/identitas dokter di header dan greeting diambil dari `auth.user` (shared props `HandleInertiaRequests`), bukan hardcode "dr. Andi Pratama".
+
+### Sistem A'' — Pharmacy shell "e-Resep / Portal Farmasi" (Material 3)
+- `resources/js/layouts/FarmasiLayout.tsx` adalah shell M3 farmasi: brand "e-Resep / Portal Farmasi", menu Dashboard (`/farmasi`), Antrean Resep (`/farmasi/antrean-resep`), Stok Obat & Laporan (disabled, "Segera hadir"), header breadcrumb "Sistem Resep Elektronik / Instalasi Farmasi", user + badge "Petugas Farmasi", logout POST `/logout`.
+- `pages/farmasi/dashboard.tsx` (`GET /farmasi`, `Farmasi\DashboardController@index`) menampilkan KPI, filter server-side (search No. Resep/nama pasien/No. RM/dokter dan filter dokter), toggle Kanban/Tabel, refresh, drawer detail, dan cetak rekap. Props: `today`, `stats`, `queue`, `doctor_options`, `filters`, `last_updated_at`.
+- Sumber data nyata: KPI `waiting` (menunggu), `received` (diterima), `preparing` (disiapkan), `processing` (diterima+disiapkan), `ready` (siap_diambil), `handed_over_today` (status diserahkan dengan `handover_confirmed_at` hari ini), `active_total` (4 status aktif), `created_today` (`created_at` hari ini). Kanban hanya memuat 4 status aktif; `diserahkan`/`dibatalkan` tidak masuk antrean.
+- Kartu menampilkan nomor `RX-###`, `created_at`, identitas pasien (No. RM/umur/gender), dokter, jumlah item, alergi pasien, dan interaksi obat antar-item. "Alergi terdata" berarti daftar alergi pasien, bukan klaim obat aman. Interaksi dihitung dari tabel `drug_interactions` untuk kombinasi obat pada resep. Field mock yang TIDAK ada di DB (nomor `R-####`, loket, prioritas, racikan, shift, poli, BPJS, timestamp transisi status) tidak dibuat/dikarang.
+- Aksi ubah status belum diimplementasikan di dashboard; tombol kartu membuka drawer detail dan tombol "Buka Antrean Resep" menuju halaman antrean yang masih placeholder.
 
 ### Sistem B — Legacy (brand-* / pharmacy-* / slate)
-- Dipakai oleh: landing, auth, dokter, farmasi, dan halaman admin yang belum dimigrasi.
-- Font: Plus Jakarta Sans (bunny fonts di vite.config.js), ikon SVG inline di dalam file .tsx.
+- Dipakai oleh landing, auth, dan `RoleLayout.tsx`.
+- Font Plus Jakarta Sans (bunny fonts di `vite.config.js`), ikon SVG inline di dalam file .tsx.
+- `RoleLayout.tsx` adalah shell legacy untuk halaman role yang belum dimigrasi; jangan dipakai untuk halaman dokter/farmasi baru yang M3.
 
 ### Aturan konversi mock HTML dari user
 User sering memberi mock HTML hasil generator AI (satu file HTML utuh dengan Tailwind CDN config, placeholder `{{DATA:SCREEN:SCREEN_X}}`, dan gambar `lh3.googleusercontent.com/aida-public/...`). Cara konversi yang benar:
 1. Token dari `tailwind.config` di mock sudah ada di `app.css` @theme — pakai langsung, JANGAN pasang Tailwind CDN atau tulis config JS.
-2. Placeholder `{{DATA:SCREEN:SCREEN_X}}` → ganti dengan route Inertia nyata (daftar route admin ada di `routes/admin.php`).
+2. Placeholder `{{DATA:SCREEN:SCREEN_X}}` → ganti dengan route Inertia nyata. Route dokter yang ada: `/dokter` (dashboard), `/dokter/pasien` (pilih pasien), `/dokter/pasien/{patient}` (detail), `/dokter/resep` (buat resep), dan aksi alergi/resep di bawahnya; route farmasi: `/farmasi` (dashboard) dan `/farmasi/antrean-resep` (placeholder); route admin ada di `routes/admin.php`.
 3. JANGAN hotlink gambar dari mock — ganti dengan avatar inisial atau asset lokal.
 4. Fungsionalitas existing (form Inertia `useForm`, modal, flash message) WAJIB dipertahankan; mock hanya visual.
-5. Data yang tidak dikirim controller (SIP, unit, status akun, last login) jangan dikarang — hanya render props yang nyata ada, dan adaptasi kolom tabel sesuai data yang tersedia.
-6. Tombol tanpa backend route (mis. "Log Aktivitas User" di akun.tsx) boleh dibiarkan sebagai placeholder visual — sebutkan sebagai TODO ke user, jangan hapus diam-diam. Yang sudah fungsional di akun.tsx: "+ Tambah Pengguna Baru" (`POST /admin/akun`), edit ikon edit_note (`PUT /admin/akun/{user}`), dan reset password (`POST /admin/akun/{user}/reset-password`).
+5. Data yang tidak dikirim controller (mis. SIP, unit, status akun, last login) jangan dikarang — render props yang nyata ada dan adaptasi kolom tabel.
+6. Tombol/item tanpa backend route boleh dibiarkan sebagai placeholder visual — sebutkan sebagai TODO ke user, jangan hapus diam-diam. Yang sudah fungsional di akun.tsx: "+ Tambah Pengguna Baru" (`POST /admin/akun`), edit ikon edit_note (`PUT /admin/akun/{user}`), dan reset password (`POST /admin/akun/{user}/reset-password`).
 7. Setelah konversi selesai: jalankan `npm run typecheck` → `npm run build` → `php artisan test`.

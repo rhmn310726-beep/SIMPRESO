@@ -23,7 +23,7 @@ class LoginTest extends TestCase
     {
         $destinations = [
             Role::Dokter->value => 'dokter.daftar-pasien',
-            Role::Farmasi->value => 'farmasi.antrean-resep',
+            Role::Farmasi->value => 'farmasi.dashboard',
             Role::Admin->value => 'admin.dashboard',
         ];
 
@@ -49,7 +49,7 @@ class LoginTest extends TestCase
     {
         $destinations = [
             Role::Dokter->value => 'dokter.daftar-pasien',
-            Role::Farmasi->value => 'farmasi.antrean-resep',
+            Role::Farmasi->value => 'farmasi.dashboard',
             Role::Admin->value => 'admin.dashboard',
         ];
 
