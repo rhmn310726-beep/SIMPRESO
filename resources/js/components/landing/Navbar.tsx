@@ -2,9 +2,8 @@ import { Link } from '@inertiajs/react';
 import { useState } from 'react';
 
 const links = [
-    { label: 'Beranda', href: '/', active: true },
-    { label: 'Resep', href: '#resep', active: false },
-    { label: 'Stok Obat', href: '#stok-obat', active: false },
+    { label: 'Kelola Resep dan Layanan Farmasi Lebih Cepat & Akurat', href: '#resep', active: false },
+    { label: 'Solusi Modern Manajemen Resep dan Apotek Terpadu', href: '#stok-obat', active: false },    
 ];
 
 export default function Navbar() {
