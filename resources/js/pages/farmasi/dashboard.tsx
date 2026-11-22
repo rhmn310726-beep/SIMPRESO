@@ -1,10 +1,12 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import FarmasiLayout from '@/layouts/FarmasiLayout';
+import type { SharedProps } from '@/types';
 
 type QueueStatus = 'menunggu' | 'diterima' | 'disiapkan' | 'siap_diambil';
 type AlertLevel = 'danger' | 'warning' | 'safe';
 type ViewMode = 'kanban' | 'tabel';
+type AlertFilter = 'all' | 'warning' | 'safe';
 
 interface Stats {
     waiting: number;
@@ -79,53 +81,71 @@ interface Props {
     last_updated_at: string | null;
 }
 
-const columns: {
+interface Column {
     key: QueueStatus;
     title: string;
-    subtitle: string;
-    icon: string;
     dot: string;
-    count: string;
-}[] = [
+    headerClass: string;
+    titleClass: string;
+    countClass: string;
+    actionLabel: string;
+    actionIcon: string;
+    actionClass: string;
+}
+
+const columns: Column[] = [
     {
         key: 'menunggu',
         title: 'Menunggu Telaah',
-        subtitle: 'Perlu verifikasi awal',
-        icon: 'pending_actions',
-        dot: 'bg-tertiary',
-        count: 'bg-tertiary-fixed text-on-tertiary-fixed',
+        dot: 'bg-outline',
+        headerClass: 'bg-surface-container-low',
+        titleClass: 'text-on-surface',
+        countClass: 'bg-surface-container-highest text-on-surface-variant',
+        actionLabel: 'Buka Detail & Telaah',
+        actionIcon: 'verified_user',
+        actionClass: 'bg-primary-container text-on-primary hover:bg-primary',
     },
     {
         key: 'diterima',
         title: 'Diterima / Peracikan',
-        subtitle: 'Sedang disiapkan',
-        icon: 'medication',
-        dot: 'bg-primary',
-        count: 'bg-primary-fixed text-on-primary-fixed',
+        dot: 'bg-primary-container',
+        headerClass: 'bg-surface-container',
+        titleClass: 'text-on-surface',
+        countClass: 'bg-surface-container-highest text-primary',
+        actionLabel: 'Buka Detail Peracikan',
+        actionIcon: 'inventory_2',
+        actionClass: 'bg-surface-container-low text-primary hover:bg-surface-container',
     },
     {
         key: 'disiapkan',
         title: 'Disiapkan / Etiket Siap',
-        subtitle: 'Menunggu pemeriksaan akhir',
-        icon: 'inventory_2',
         dot: 'bg-secondary',
-        count: 'bg-secondary-fixed text-on-secondary-fixed',
+        headerClass: 'bg-surface-container-high',
+        titleClass: 'text-on-surface',
+        countClass: 'bg-surface-container text-secondary',
+        actionLabel: 'Buka Detail Etiket',
+        actionIcon: 'label',
+        actionClass:
+            'bg-secondary-container text-on-secondary-container hover:bg-secondary hover:text-on-secondary',
     },
     {
         key: 'siap_diambil',
-        title: 'Siap Diambil di Loket',
-        subtitle: 'Menunggu serah terima',
-        icon: 'shopping_bag',
-        dot: 'bg-[#b45309]',
-        count: 'bg-[#ffedd5] text-[#9a3412]',
+        title: 'Siap Diambil',
+        dot: 'bg-secondary',
+        headerClass: 'bg-secondary-fixed',
+        titleClass: 'text-on-secondary-fixed',
+        countClass: 'bg-surface-container-lowest text-secondary',
+        actionLabel: 'Buka Detail Serah Terima',
+        actionIcon: 'how_to_reg',
+        actionClass: 'bg-secondary text-on-secondary hover:bg-on-secondary-fixed-variant',
     },
 ];
 
 const statusStyles: Record<QueueStatus, string> = {
-    menunggu: 'bg-tertiary-fixed text-on-tertiary-fixed',
+    menunggu: 'bg-surface-container-highest text-on-surface-variant',
     diterima: 'bg-primary-fixed text-on-primary-fixed-variant',
     disiapkan: 'bg-secondary-fixed text-on-secondary-fixed-variant',
-    siap_diambil: 'bg-[#ffedd5] text-[#9a3412]',
+    siap_diambil: 'bg-secondary-fixed-dim text-on-secondary-fixed',
 };
 
 const statusSteps: { key: QueueStatus; label: string }[] = [
@@ -143,8 +163,10 @@ export default function DashboardFarmasi({
     filters,
     last_updated_at,
 }: Props) {
+    const { auth } = usePage<SharedProps>().props;
     const [search, setSearch] = useState(filters.search);
     const [doctorId, setDoctorId] = useState(filters.doctor_id);
+    const [alertFilter, setAlertFilter] = useState<AlertFilter>('all');
     const [view, setView] = useState<ViewMode>('kanban');
     const [selected, setSelected] = useState<QueueItem | null>(null);
     const [refreshing, setRefreshing] = useState(false);
@@ -211,15 +233,27 @@ export default function DashboardFarmasi({
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [selected]);
 
+    const visibleQueue = useMemo(() => {
+        if (alertFilter === 'warning') {
+            return queue.filter((item) => item.has_alerts);
+        }
+
+        if (alertFilter === 'safe') {
+            return queue.filter((item) => !item.has_alerts);
+        }
+
+        return queue;
+    }, [queue, alertFilter]);
+
     useEffect(() => {
         setSelected((current) => {
             if (current === null) {
                 return null;
             }
 
-            return queue.find((item) => item.id === current.id) ?? current;
+            return visibleQueue.find((item) => item.id === current.id) ?? current;
         });
-    }, [queue]);
+    }, [visibleQueue]);
 
     const grouped = useMemo(() => {
         const result: Record<QueueStatus, QueueItem[]> = {
@@ -229,21 +263,16 @@ export default function DashboardFarmasi({
             siap_diambil: [],
         };
 
-        for (const item of queue) {
-            if (
-                item.status === 'menunggu' ||
-                item.status === 'diterima' ||
-                item.status === 'disiapkan' ||
-                item.status === 'siap_diambil'
-            ) {
-                result[item.status].push(item);
-            }
+        for (const item of visibleQueue) {
+            result[item.status].push(item);
         }
 
         return result;
-    }, [queue]);
+    }, [visibleQueue]);
 
-    const hasFilter = filters.search !== '' || filters.doctor_id !== '';
+    const hasServerFilter = filters.search !== '' || filters.doctor_id !== '';
+    const hasClientFilter = alertFilter !== 'all';
+    const hasFilter = hasServerFilter || hasClientFilter;
 
     const refresh = () => {
         setRefreshing(true);
@@ -255,148 +284,134 @@ export default function DashboardFarmasi({
     const resetFilters = () => {
         setSearch('');
         setDoctorId('');
+        setAlertFilter('all');
     };
 
     return (
         <>
             <Head title="Dashboard Farmasi" />
             <FarmasiLayout>
-                <div className="mx-auto flex w-full max-w-[1720px] flex-col gap-space-md">
-                    <section className="flex flex-col gap-space-md lg:flex-row lg:items-start lg:justify-between">
-                        <div>
-                            <div className="flex flex-wrap items-center gap-space-sm font-label-sm text-label-sm">
-                                <span className="inline-flex items-center gap-1 rounded-full bg-secondary-fixed px-2.5 py-1 font-semibold text-on-secondary-fixed-variant">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-secondary" />
-                                    Instalasi Farmasi
-                                </span>
-                                <span className="text-outline">{today}</span>
+                <div className="mx-auto flex w-full max-w-[1720px] flex-col gap-space-lg">
+                    {/* Dashboard menampilkan pantauan antrean; proses telaah, transisi status,
+                        dan serah terima dilakukan di Antrean Resep. */}
+                    <section className="flex flex-col justify-between gap-space-sm rounded-xl bg-surface-container-lowest p-space-md shadow-sm md:flex-row md:items-center">
+                        <div className="flex items-center gap-space-sm">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container text-primary-container">
+                                <span className="material-symbols-outlined text-[20px]">badge</span>
                             </div>
-                            <h1 className="mt-space-sm font-headline-lg text-headline-lg text-on-surface">
-                                Ringkasan Antrean Resep
-                            </h1>
-                            <p className="mt-1 max-w-2xl font-body-md text-body-md text-on-surface-variant">
-                                Pantau resep yang masuk, sedang disiapkan, siap diambil, dan sudah
-                                diserahkan hari ini.
-                            </p>
+                            <div className="flex flex-col">
+                                <p className="font-body-sm text-body-sm text-on-surface-variant">
+                                    Selamat datang,{' '}
+                                    <span className="font-label-md text-label-md font-semibold text-on-surface">
+                                        {auth.user?.name ?? 'Petugas Farmasi'}
+                                    </span>{' '}
+                                    — Instalasi Farmasi RS
+                                </p>
+                                <span className="font-label-sm text-label-sm text-outline">
+                                    Pantauan antrean resep • {today}
+                                </span>
+                            </div>
                         </div>
-
-                        <div className="flex flex-wrap items-center gap-space-sm">
-                            <div className="flex items-center gap-space-sm rounded-xl border border-outline-variant/70 bg-surface-container-lowest px-space-md py-2.5 shadow-sm">
-                                <span className="material-symbols-outlined text-[20px] text-primary">
-                                    schedule
-                                </span>
-                                <div>
-                                    <p className="font-label-sm text-label-sm text-outline">
-                                        Waktu saat ini
-                                    </p>
-                                    <p className="font-label-md text-label-md font-semibold text-on-surface">
-                                        {clock}
-                                    </p>
-                                </div>
+                        <div className="flex flex-wrap items-center gap-space-md">
+                            <div className="flex items-center gap-2 rounded-full bg-surface-container-low px-space-sm py-1 font-label-sm text-label-sm text-secondary">
+                                <span className="h-2 w-2 animate-pulse rounded-full bg-secondary" />
+                                <span>{stats.active_total} resep aktif hari ini</span>
                             </div>
-                            <button
-                                type="button"
-                                onClick={() => window.print()}
-                                className="inline-flex items-center gap-2 rounded-xl border border-outline-variant/70 bg-surface-container-lowest px-space-md py-3 font-label-md text-label-md font-semibold text-on-surface-variant shadow-sm transition-colors hover:bg-surface-container-high hover:text-on-surface"
-                            >
-                                <span className="material-symbols-outlined text-[20px]">print</span>
-                                Cetak Rekap
-                            </button>
+                            <div className="hidden items-center gap-1 font-code-sm text-code-sm text-outline lg:flex">
+                                <span className="material-symbols-outlined text-[16px]">schedule</span>
+                                <span id="live-clock">{clock}</span>
+                            </div>
                         </div>
                     </section>
 
-                    <section className="grid gap-space-sm sm:grid-cols-2 xl:grid-cols-4">
-                        <StatCard
+                    <section className="grid grid-cols-1 gap-space-md sm:grid-cols-2 lg:grid-cols-4">
+                        <KpiCard
                             label="Resep Masuk"
                             value={stats.waiting}
-                            hint="Menunggu telaah awal"
+                            unit="antrean"
                             icon="inbox"
-                            iconClass="bg-tertiary-fixed text-on-tertiary-fixed"
+                            iconClass="bg-surface-container text-primary-container"
+                            blobClass="bg-surface-container"
+                            valueClass="text-primary"
+                            badge="Butuh Telaah"
+                            badgeClass="bg-surface-container text-primary"
+                            footer={`${stats.created_today} dibuat hari ini`}
                         />
-                        <StatCard
+                        <KpiCard
                             label="Sedang Diproses"
                             value={stats.processing}
-                            hint={`${stats.received} diterima · ${stats.preparing} disiapkan`}
-                            icon="medication"
-                            iconClass="bg-primary-fixed text-on-primary-fixed-variant"
+                            unit="resep"
+                            icon="experiment"
+                            iconClass="bg-surface-container-high text-on-surface-variant"
+                            blobClass="bg-surface-container-highest"
+                            valueClass="text-on-surface"
+                            badge={`${stats.received} diterima • ${stats.preparing} disiapkan`}
+                            badgeClass="bg-surface-container-high text-on-surface-variant"
+                            footer="Telaah & peracikan"
                         />
-                        <StatCard
+                        <KpiCard
                             label="Siap Diambil"
                             value={stats.ready}
-                            hint="Menunggu serah terima"
-                            icon="shopping_bag"
-                            iconClass="bg-[#ffedd5] text-[#9a3412]"
+                            unit="resep"
+                            icon="verified"
+                            iconClass="bg-secondary-fixed text-on-secondary-fixed"
+                            blobClass="bg-secondary-fixed opacity-60"
+                            valueClass="text-secondary"
+                            badge="Menunggu serah terima"
+                            badgeClass="bg-secondary-fixed-dim text-on-secondary-fixed"
+                            footer="Status siap diambil"
                         />
-                        <StatCard
+                        <KpiCard
                             label="Diserahkan Hari Ini"
                             value={stats.handed_over_today}
-                            hint={`${stats.active_total} resep aktif saat ini`}
+                            unit="resep"
                             icon="task_alt"
-                            iconClass="bg-secondary-fixed text-on-secondary-fixed-variant"
+                            iconClass="bg-surface-container text-secondary"
+                            blobClass="bg-surface-container"
+                            valueClass="text-on-surface"
+                            badge={`${stats.active_total} resep aktif`}
+                            badgeClass="bg-surface-container text-secondary"
+                            footer="Konfirmasi serah terima"
                         />
                     </section>
 
-                    <section className="rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-space-sm shadow-sm print:hidden">
-                        <div className="flex flex-col gap-space-sm xl:flex-row xl:items-center">
-                            <div className="relative flex-1">
-                                <span className="material-symbols-outlined pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[20px] text-outline">
-                                    search
-                                </span>
-                                <input
-                                    type="search"
-                                    value={search}
-                                    onChange={(event) => setSearch(event.target.value)}
-                                    placeholder="Cari No. Resep, nama pasien, No. RM, atau dokter..."
-                                    aria-label="Cari antrean resep"
-                                    className="w-full rounded-xl border border-outline-variant/70 bg-surface-container-low py-2.5 pr-3 pl-10 font-body-md text-body-md text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-                                />
+                    <section className="flex flex-col gap-space-md rounded-xl bg-surface-container-lowest p-space-md shadow-sm print:hidden">
+                        <div className="flex flex-col justify-between gap-space-md lg:flex-row lg:items-center">
+                            <div className="flex flex-wrap items-center gap-space-md">
+                                <div className="flex items-center gap-space-sm">
+                                    <h1 className="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">
+                                        Antrean Resep Masuk
+                                    </h1>
+                                    <span className="rounded-full bg-surface-container px-2 py-0.5 font-label-sm text-label-sm font-semibold text-primary-container">
+                                        Live
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 rounded-full bg-surface-container-low px-space-sm py-1 font-label-sm text-label-sm text-secondary">
+                                    <span className="relative flex h-2 w-2">
+                                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-secondary opacity-75" />
+                                        <span className="relative inline-flex h-2 w-2 rounded-full bg-secondary" />
+                                    </span>
+                                    <span className="font-medium">
+                                        {last_updated_at
+                                            ? `Sinkron s.d. ${last_updated_at}`
+                                            : 'Menunggu pembaruan antrean'}
+                                    </span>
+                                </div>
                             </div>
 
                             <div className="flex flex-wrap items-center gap-space-sm">
-                                <label className="flex items-center gap-2 rounded-xl border border-outline-variant/70 bg-surface-container-low px-3 py-2 font-label-sm text-label-sm text-on-surface-variant">
-                                    <span className="material-symbols-outlined text-[18px]">
-                                        stethoscope
-                                    </span>
-                                    <span className="sr-only">Filter dokter</span>
-                                    <select
-                                        value={doctorId}
-                                        onChange={(event) => setDoctorId(event.target.value)}
-                                        className="min-w-40 bg-transparent font-label-md text-label-md text-on-surface outline-none"
-                                    >
-                                        <option value="">Semua dokter</option>
-                                        {doctor_options.map((doctor) => (
-                                            <option key={doctor.id} value={doctor.id}>
-                                                {doctor.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-
-                                {hasFilter && (
-                                    <button
-                                        type="button"
-                                        onClick={resetFilters}
-                                        className="inline-flex items-center gap-1 rounded-xl px-3 py-2 font-label-sm text-label-sm font-semibold text-primary transition-colors hover:bg-primary-fixed"
-                                    >
-                                        <span className="material-symbols-outlined text-[18px]">
-                                            filter_alt_off
-                                        </span>
-                                        Reset
-                                    </button>
-                                )}
-
-                                <div className="flex rounded-xl border border-outline-variant/70 bg-surface-container-low p-1">
+                                <div className="flex items-center rounded-lg bg-surface-container-low p-1">
                                     <button
                                         type="button"
                                         onClick={() => setView('kanban')}
                                         aria-pressed={view === 'kanban'}
-                                        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-label-sm text-label-sm font-semibold transition ${
+                                        className={`flex items-center gap-1.5 rounded-lg px-space-md py-1.5 font-label-sm text-label-sm transition-colors ${
                                             view === 'kanban'
-                                                ? 'bg-surface-container-lowest text-primary shadow-sm'
+                                                ? 'bg-primary-container font-semibold text-on-primary shadow-sm'
                                                 : 'text-on-surface-variant hover:text-on-surface'
                                         }`}
                                     >
-                                        <span className="material-symbols-outlined text-[18px]">
+                                        <span className="material-symbols-outlined text-[16px]">
                                             view_kanban
                                         </span>
                                         Kanban
@@ -405,24 +420,77 @@ export default function DashboardFarmasi({
                                         type="button"
                                         onClick={() => setView('tabel')}
                                         aria-pressed={view === 'tabel'}
-                                        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-label-sm text-label-sm font-semibold transition ${
+                                        className={`flex items-center gap-1.5 rounded-lg px-space-md py-1.5 font-label-sm text-label-sm transition-colors ${
                                             view === 'tabel'
-                                                ? 'bg-surface-container-lowest text-primary shadow-sm'
+                                                ? 'bg-primary-container font-semibold text-on-primary shadow-sm'
                                                 : 'text-on-surface-variant hover:text-on-surface'
                                         }`}
                                     >
-                                        <span className="material-symbols-outlined text-[18px]">
+                                        <span className="material-symbols-outlined text-[16px]">
                                             table_rows
                                         </span>
                                         Tabel
                                     </button>
                                 </div>
 
+                                <div className="hidden h-6 w-px bg-surface-container-highest sm:block" />
+
+                                <div className="relative">
+                                    <select
+                                        value={doctorId}
+                                        onChange={(event) => setDoctorId(event.target.value)}
+                                        aria-label="Filter Dokter"
+                                        className="cursor-pointer appearance-none rounded-lg bg-surface-container-low py-2 pr-8 pl-space-md font-label-sm text-label-sm text-on-surface shadow-sm focus:ring-2 focus:ring-primary-container focus:outline-none"
+                                    >
+                                        <option value="">Dokter: Semua Dokter</option>
+                                        {doctor_options.map((doctor) => (
+                                            <option key={doctor.id} value={doctor.id}>
+                                                {doctor.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <span className="material-symbols-outlined pointer-events-none absolute top-2.5 right-2 text-[16px] text-outline">
+                                        expand_more
+                                    </span>
+                                </div>
+
+                                <div className="relative">
+                                    <select
+                                        value={alertFilter}
+                                        onChange={(event) =>
+                                            setAlertFilter(event.target.value as AlertFilter)
+                                        }
+                                        aria-label="Filter Peringatan"
+                                        className="cursor-pointer appearance-none rounded-lg bg-surface-container-low py-2 pr-8 pl-space-md font-label-sm text-label-sm text-on-surface shadow-sm focus:ring-2 focus:ring-primary-container focus:outline-none"
+                                    >
+                                        <option value="all">Peringatan: Semua</option>
+                                        <option value="warning">Ada alergi / interaksi</option>
+                                        <option value="safe">Aman / tanpa peringatan</option>
+                                    </select>
+                                    <span className="material-symbols-outlined pointer-events-none absolute top-2.5 right-2 text-[16px] text-outline">
+                                        expand_more
+                                    </span>
+                                </div>
+
+                                {hasFilter && (
+                                    <button
+                                        type="button"
+                                        onClick={resetFilters}
+                                        className="inline-flex items-center gap-1 rounded-lg px-3 py-2 font-label-sm text-label-sm font-semibold text-primary transition-colors hover:bg-primary-fixed"
+                                    >
+                                        <span className="material-symbols-outlined text-[18px]">
+                                            filter_alt_off
+                                        </span>
+                                        Reset
+                                    </button>
+                                )}
+
                                 <button
                                     type="button"
                                     onClick={refresh}
                                     disabled={refreshing}
-                                    className="inline-flex items-center gap-1.5 rounded-xl border border-outline-variant/70 bg-surface-container-low px-3 py-2 font-label-sm text-label-sm font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface disabled:cursor-wait disabled:opacity-60"
+                                    title="Muat ulang antrean"
+                                    className="flex items-center justify-center rounded-lg bg-surface-container-low p-2 text-on-surface-variant shadow-sm transition-colors hover:bg-surface-container hover:text-on-surface disabled:cursor-wait disabled:opacity-60"
                                 >
                                     <span
                                         className={`material-symbols-outlined text-[18px] ${
@@ -431,52 +499,73 @@ export default function DashboardFarmasi({
                                     >
                                         refresh
                                     </span>
-                                    Muat Ulang
+                                    <span className="sr-only">Muat ulang antrean</span>
                                 </button>
                             </div>
                         </div>
+
+                        <div className="relative">
+                            <span className="material-symbols-outlined pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[20px] text-outline">
+                                search
+                            </span>
+                            <input
+                                type="search"
+                                value={search}
+                                onChange={(event) => setSearch(event.target.value)}
+                                placeholder="Cari No. Resep, nama pasien, No. RM, atau dokter..."
+                                aria-label="Cari antrean resep"
+                                className="w-full rounded-lg border border-outline-variant/60 bg-surface-container-low py-2.5 pr-3 pl-10 font-body-md text-body-md text-on-surface outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                            />
+                        </div>
                     </section>
 
-                    {queue.length === 0 ? (
-                        <EmptyQueue hasFilter={hasFilter} onReset={resetFilters} />
-                    ) : view === 'kanban' ? (
-                        <section className="grid gap-space-md xl:grid-cols-4">
+                    {hasFilter && visibleQueue.length === 0 && view === 'kanban' && (
+                        <div className="flex flex-wrap items-center justify-between gap-space-sm rounded-xl bg-surface-container-lowest px-space-md py-3 font-label-sm text-label-sm text-on-surface-variant shadow-sm">
+                            <span>Tidak ada resep yang cocok dengan pencarian atau filter.</span>
+                            <button
+                                type="button"
+                                onClick={resetFilters}
+                                className="inline-flex items-center gap-1 font-semibold text-primary transition-colors hover:text-primary/80"
+                            >
+                                <span className="material-symbols-outlined text-[16px]">
+                                    filter_alt_off
+                                </span>
+                                Reset filter
+                            </button>
+                        </div>
+                    )}
+
+                    {view === 'kanban' ? (
+                        <section className="grid grid-cols-1 items-start gap-space-md md:grid-cols-2 xl:grid-cols-4">
                             {columns.map((column) => (
-                                <div
-                                    key={column.key}
-                                    className="flex min-h-[420px] flex-col rounded-2xl border border-outline-variant/60 bg-surface-container-lowest shadow-sm"
-                                >
-                                    <div className="flex items-start justify-between gap-space-sm border-b border-outline-variant/60 px-space-md py-3">
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <span
-                                                    className={`h-2.5 w-2.5 rounded-full ${column.dot}`}
-                                                />
-                                                <h2 className="font-label-md text-label-md font-semibold text-on-surface">
-                                                    {column.title}
-                                                </h2>
-                                                <span
-                                                    className={`inline-flex min-w-6 items-center justify-center rounded-full px-1.5 py-0.5 font-label-sm text-label-sm font-bold ${column.count}`}
-                                                >
-                                                    {grouped[column.key].length}
-                                                </span>
-                                            </div>
-                                            <p className="mt-1 pl-[18px] font-label-sm text-label-sm text-outline">
-                                                {column.subtitle}
-                                            </p>
+                                <div key={column.key} className="flex flex-col gap-space-md">
+                                    <div
+                                        className={`flex items-center justify-between rounded-xl p-space-md shadow-sm ${column.headerClass}`}
+                                    >
+                                        <div className="flex items-center gap-space-sm">
+                                            <span
+                                                className={`h-3 w-3 rounded-full ${column.dot}`}
+                                            />
+                                            <h2
+                                                className={`font-label-md text-label-md font-bold ${column.titleClass}`}
+                                            >
+                                                {column.title}
+                                            </h2>
                                         </div>
-                                        <span className="material-symbols-outlined text-[20px] text-outline">
-                                            {column.icon}
+                                        <span
+                                            className={`rounded-full px-2 py-0.5 font-code-sm text-code-sm font-semibold ${column.countClass}`}
+                                        >
+                                            {grouped[column.key].length}
                                         </span>
                                     </div>
 
-                                    <div className="flex flex-1 flex-col gap-space-sm p-space-sm">
+                                    <div className="flex flex-col gap-space-md">
                                         {grouped[column.key].length === 0 ? (
-                                            <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-outline-variant/70 px-4 py-10 text-center">
-                                                <span className="material-symbols-outlined text-[28px] text-outline-variant">
+                                            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-outline-variant/70 bg-surface-container-lowest/60 px-4 py-8 text-center">
+                                                <span className="material-symbols-outlined text-[24px] text-outline-variant">
                                                     event_available
                                                 </span>
-                                                <p className="mt-2 font-label-sm text-label-sm text-outline">
+                                                <p className="mt-1 font-label-sm text-label-sm text-outline">
                                                     Tidak ada resep
                                                 </p>
                                             </div>
@@ -485,6 +574,7 @@ export default function DashboardFarmasi({
                                                 <QueueCard
                                                     key={item.id}
                                                     item={item}
+                                                    column={column}
                                                     onOpen={() => setSelected(item)}
                                                 />
                                             ))
@@ -493,24 +583,52 @@ export default function DashboardFarmasi({
                                 </div>
                             ))}
                         </section>
+                    ) : visibleQueue.length === 0 ? (
+                        <EmptyQueue hasFilter={hasFilter} onReset={resetFilters} />
                     ) : (
-                        <QueueTable queue={queue} onOpen={setSelected} />
+                        <QueueTable queue={visibleQueue} onOpen={setSelected} />
                     )}
 
-                    <footer className="flex flex-col gap-2 rounded-xl border border-outline-variant/50 bg-surface-container-lowest px-space-md py-3 font-label-sm text-label-sm text-on-surface-variant sm:flex-row sm:items-center sm:justify-between">
+                    <footer className="flex flex-col items-start justify-between gap-space-sm rounded-xl bg-surface-container-lowest p-space-md font-body-sm text-body-sm text-on-surface-variant shadow-sm sm:flex-row sm:items-center">
                         <div className="flex flex-wrap items-center gap-x-space-md gap-y-1">
-                            <span className="inline-flex items-center gap-1.5">
-                                <span className="h-2 w-2 rounded-full bg-secondary" />
-                                {queue.length} resep ditampilkan
+                            <span className="flex items-center gap-2">
+                                <span className="material-symbols-outlined text-[18px] text-secondary">
+                                    verified
+                                </span>
+                                Menampilkan{' '}
+                                <strong className="font-semibold text-on-surface">
+                                    {visibleQueue.length} resep
+                                </strong>{' '}
+                                ·{' '}
+                                <strong className="font-semibold text-on-surface">
+                                    {stats.active_total} total aktif
+                                </strong>
                             </span>
-                            <span>{stats.created_today} resep dibuat hari ini</span>
-                            <span>{stats.active_total} resep aktif</span>
+                            <span className="text-outline">•</span>
+                            <span>
+                                {last_updated_at
+                                    ? `Terakhir diperbarui ${last_updated_at}`
+                                    : 'Belum ada pembaruan antrean'}
+                            </span>
                         </div>
-                        <span>
-                            {last_updated_at
-                                ? `Terakhir diperbarui ${last_updated_at}`
-                                : 'Belum ada pembaruan antrean'}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-space-md">
+                            <div className="flex items-center gap-space-xs font-label-sm text-label-sm text-outline">
+                                <span className="h-2 w-2 rounded-full bg-secondary" />
+                                <span>Aman</span>
+                                <span className="ml-2 h-2 w-2 rounded-full bg-error" />
+                                <span>Perlu Perhatian Alergi</span>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => window.print()}
+                                className="flex items-center gap-1 rounded-lg bg-surface-container px-space-md py-1.5 font-label-sm text-label-sm font-semibold text-primary transition-colors hover:bg-surface-container-high"
+                            >
+                                <span className="material-symbols-outlined text-[16px]">
+                                    print
+                                </span>
+                                Cetak Rekap Antrean
+                            </button>
+                        </div>
                     </footer>
                 </div>
             </FarmasiLayout>
@@ -522,80 +640,118 @@ export default function DashboardFarmasi({
     );
 }
 
-function StatCard({
+function KpiCard({
     label,
     value,
-    hint,
+    unit,
     icon,
     iconClass,
+    blobClass,
+    valueClass,
+    badge,
+    badgeClass,
+    footer,
 }: {
     label: string;
     value: number;
-    hint: string;
+    unit: string;
     icon: string;
     iconClass: string;
+    blobClass: string;
+    valueClass: string;
+    badge: string;
+    badgeClass: string;
+    footer: string;
 }) {
     return (
-        <article className="rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-space-md shadow-sm">
-            <div className="flex items-start justify-between gap-space-sm">
-                <div>
-                    <p className="font-label-sm text-label-sm font-semibold tracking-wide text-on-surface-variant uppercase">
+        <article className="group relative flex flex-col justify-between overflow-hidden rounded-xl bg-surface-container-lowest p-space-lg shadow-sm transition-shadow hover:shadow-md">
+            <div
+                className={`absolute top-0 right-0 -mt-6 -mr-6 h-24 w-24 rounded-bl-full transition-transform group-hover:scale-105 ${blobClass}`}
+            />
+            <div className="relative z-10 flex items-start justify-between">
+                <div className="flex flex-col">
+                    <span className="font-label-sm text-label-sm font-semibold tracking-wider text-outline uppercase">
                         {label}
-                    </p>
-                    <p className="mt-2 font-headline-lg text-headline-lg leading-none font-bold text-on-surface">
-                        {value}
-                    </p>
-                    <p className="mt-2 font-label-sm text-label-sm text-outline">{hint}</p>
+                    </span>
+                    <div className="mt-1 flex items-baseline gap-space-xs">
+                        <span
+                            className={`font-display-lg text-display-lg font-bold ${valueClass}`}
+                        >
+                            {value}
+                        </span>
+                        <span className="font-label-sm text-label-sm text-on-surface-variant">
+                            {unit}
+                        </span>
+                    </div>
                 </div>
-                <span
-                    className={`flex h-11 w-11 items-center justify-center rounded-xl ${iconClass}`}
+                <div
+                    className={`flex h-11 w-11 items-center justify-center rounded-lg ${iconClass}`}
                 >
-                    <span className="material-symbols-outlined text-[22px]">{icon}</span>
+                    <span className="material-symbols-outlined text-[24px]">{icon}</span>
+                </div>
+            </div>
+            <div className="mt-space-md flex items-center justify-between gap-2 pt-space-xs">
+                <span
+                    className={`inline-flex items-center gap-1 rounded px-2 py-0.5 font-label-sm text-label-sm font-medium ${badgeClass}`}
+                >
+                    <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                    {badge}
                 </span>
+                <span className="font-code-sm text-code-sm text-outline">{footer}</span>
             </div>
         </article>
     );
 }
 
-function QueueCard({ item, onOpen }: { item: QueueItem; onOpen: () => void }) {
+function QueueCard({
+    item,
+    column,
+    onOpen,
+}: {
+    item: QueueItem;
+    column: Column;
+    onOpen: () => void;
+}) {
     const allergyNames = item.allergies.map((allergy) => allergy.allergen).join(', ');
     const firstInteraction = item.interactions[0];
 
     return (
-        <article className="rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-space-sm shadow-[0_1px_4px_rgba(0,0,0,0.04)] transition hover:border-primary/40 hover:shadow-md">
-            <div className="flex items-start justify-between gap-space-sm">
-                <div>
-                    <p className="font-label-md text-label-md font-bold text-primary">
-                        {item.number}
-                    </p>
-                    <p className="mt-0.5 font-label-sm text-label-sm text-outline">
-                        {item.created_at_time}
-                    </p>
+        <article className="relative flex flex-col gap-space-sm rounded-xl bg-surface-container-lowest p-space-md shadow-sm transition-shadow hover:shadow-md">
+            <div className="flex items-center justify-between">
+                <span className="font-code-sm text-code-sm font-bold tracking-wide text-primary">
+                    {item.number}
+                </span>
+                <div className="flex items-center gap-1 font-code-sm text-code-sm text-outline">
+                    <span className="material-symbols-outlined text-[14px]">schedule</span>
+                    <span>{item.created_at_time}</span>
                 </div>
-                <span
-                    className={`inline-flex items-center rounded-full px-2 py-0.5 font-label-sm text-label-sm font-semibold ${statusStyles[item.status]}`}
-                >
-                    {item.status_label}
+            </div>
+
+            <div className="flex flex-col">
+                <div className="flex items-start justify-between gap-2">
+                    <span className="font-headline-sm text-headline-sm font-semibold text-on-surface">
+                        {item.patient.name}
+                    </span>
+                    <span className="shrink-0 rounded bg-surface-container px-1.5 py-0.5 font-label-sm text-label-sm font-medium text-primary">
+                        {item.status_label}
+                    </span>
+                </div>
+                <span className="mt-0.5 font-label-sm text-label-sm text-outline">
+                    {item.patient.medical_record_number} • {item.patient.age} Th •{' '}
+                    {item.patient.gender_label}
                 </span>
             </div>
 
-            <div className="mt-space-sm border-t border-outline-variant/50 pt-space-sm">
-                <p className="font-label-md text-label-md font-semibold text-on-surface">
-                    {item.patient.name}
-                </p>
-                <p className="mt-0.5 font-label-sm text-label-sm text-on-surface-variant">
-                    {item.patient.medical_record_number} · {item.patient.age} th ·{' '}
-                    {item.patient.gender_label}
-                </p>
-                <p className="mt-1 flex items-center gap-1 font-label-sm text-label-sm text-outline">
-                    <span className="material-symbols-outlined text-[15px]">stethoscope</span>
-                    {item.doctor_name}
-                </p>
+            <div className="flex items-center gap-1.5 rounded-lg bg-surface-container-low p-2 font-body-sm text-body-sm text-on-surface-variant">
+                <span className="material-symbols-outlined text-[16px] text-outline">
+                    stethoscope
+                </span>
+                <span className="truncate">{item.doctor_name}</span>
             </div>
 
-            <div className="mt-space-sm flex items-center justify-between gap-2">
-                <span className="inline-flex items-center gap-1 rounded-lg bg-surface-container-low px-2 py-1 font-label-sm text-label-sm text-on-surface-variant">
-                    <span className="material-symbols-outlined text-[15px]">medication</span>
+            <div className="flex items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-1 rounded bg-surface-container px-2 py-0.5 font-label-sm text-label-sm text-on-surface-variant">
+                    <span className="material-symbols-outlined text-[14px]">medication</span>
                     {item.items_count} item obat
                 </span>
                 {item.has_alerts ? (
@@ -604,48 +760,58 @@ function QueueCard({ item, onOpen }: { item: QueueItem; onOpen: () => void }) {
                         Perlu perhatian
                     </span>
                 ) : (
-                    <span className="font-label-sm text-label-sm text-secondary">
-                        Tidak ada alergi/interaksi
+                    <span className="inline-flex items-center gap-1 rounded bg-secondary-fixed px-2 py-0.5 font-label-sm text-label-sm font-semibold text-on-secondary-fixed">
+                        <span className="material-symbols-outlined text-[12px]">
+                            check_circle
+                        </span>
+                        Aman / Non-Alergi
                     </span>
                 )}
             </div>
 
             {allergyNames !== '' && (
-                <div className="mt-space-sm flex items-start gap-2 rounded-lg bg-error-container/70 px-2.5 py-2 text-on-error-container">
-                    <span className="material-symbols-outlined mt-0.5 text-[17px]">dangerous</span>
-                    <p className="font-label-sm text-label-sm leading-snug">
-                        <span className="font-semibold">Alergi terdata:</span> {allergyNames}
-                    </p>
+                <div className="flex items-start gap-1.5 rounded-lg bg-error-container p-2 text-on-error-container shadow-sm">
+                    <span className="material-symbols-outlined mt-px shrink-0 text-[18px] text-error">
+                        warning
+                    </span>
+                    <div className="flex flex-col">
+                        <span className="font-label-sm text-label-sm leading-tight font-bold">
+                            Alergi: {allergyNames}
+                        </span>
+                        <span className="mt-0.5 font-body-sm text-body-sm leading-tight text-error">
+                            Cek potensi reaksi silang sebelum persetujuan
+                        </span>
+                    </div>
                 </div>
             )}
 
             {firstInteraction !== undefined && (
-                <div className="mt-space-sm flex items-start gap-2 rounded-lg bg-tertiary-fixed px-2.5 py-2 text-on-tertiary-fixed">
-                    <span className="material-symbols-outlined mt-0.5 text-[17px]">
+                <div className="flex items-start gap-1.5 rounded-lg bg-tertiary-fixed p-2 text-on-tertiary-fixed">
+                    <span className="material-symbols-outlined mt-px shrink-0 text-[18px]">
                         sync_problem
                     </span>
-                    <div className="min-w-0 font-label-sm text-label-sm leading-snug">
-                        <p className="font-semibold">
-                            Interaksi {firstInteraction.severity_label}: {firstInteraction.medicine_a}{' '}
-                            + {firstInteraction.medicine_b}
-                        </p>
+                    <div className="flex min-w-0 flex-col">
+                        <span className="font-label-sm text-label-sm leading-tight font-bold">
+                            Interaksi {firstInteraction.severity_label}:{' '}
+                            {firstInteraction.medicine_a} + {firstInteraction.medicine_b}
+                        </span>
                         {item.interactions.length > 1 && (
-                            <p className="mt-0.5 opacity-80">
+                            <span className="mt-0.5 font-body-sm text-body-sm opacity-80">
                                 +{item.interactions.length - 1} interaksi lain
-                            </p>
+                            </span>
                         )}
                     </div>
                 </div>
             )}
 
-            <button
-                type="button"
-                onClick={onOpen}
-                className="mt-space-sm flex w-full items-center justify-center gap-1.5 rounded-lg border border-outline-variant/70 px-3 py-2 font-label-sm text-label-sm font-semibold text-on-surface-variant transition-colors hover:border-primary/40 hover:bg-primary-fixed hover:text-primary"
+            <Link
+                href={`/farmasi/antrean-resep/${item.id}`}
+                title={`${column.actionLabel} — buka halaman proses resep`}
+                className={`mt-1 flex w-full items-center justify-center gap-2 rounded-lg px-space-md py-2 font-label-md text-label-md font-semibold shadow-sm transition-colors ${column.actionClass}`}
             >
-                <span className="material-symbols-outlined text-[17px]">visibility</span>
-                Lihat Detail Resep
-            </button>
+                <span className="material-symbols-outlined text-[18px]">{column.actionIcon}</span>
+                <span>{column.actionLabel}</span>
+            </Link>
         </article>
     );
 }
@@ -658,7 +824,7 @@ function QueueTable({
     onOpen: (item: QueueItem) => void;
 }) {
     return (
-        <section className="overflow-hidden rounded-2xl border border-outline-variant/60 bg-surface-container-lowest shadow-sm">
+        <section className="overflow-hidden rounded-xl bg-surface-container-lowest shadow-sm">
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-outline-variant/60">
                     <thead className="bg-surface-container-low">
@@ -676,7 +842,7 @@ function QueueTable({
                         {queue.map((item) => (
                             <tr key={item.id} className="hover:bg-surface-container-low/70">
                                 <td className="px-space-md py-3">
-                                    <p className="font-label-md text-label-md font-bold text-primary">
+                                    <p className="font-code-sm text-code-sm font-bold text-primary">
                                         {item.number}
                                     </p>
                                     <p className="font-label-sm text-label-sm text-outline">
@@ -737,7 +903,7 @@ function QueueTable({
                                     <button
                                         type="button"
                                         onClick={() => onOpen(item)}
-                                        className="inline-flex items-center gap-1 rounded-lg border border-outline-variant/70 px-2.5 py-1.5 font-label-sm text-label-sm font-semibold text-on-surface-variant transition-colors hover:bg-primary-fixed hover:text-primary"
+                                        className="inline-flex items-center gap-1 rounded-lg bg-surface-container-low px-2.5 py-1.5 font-label-sm text-label-sm font-semibold text-primary transition-colors hover:bg-surface-container"
                                     >
                                         <span className="material-symbols-outlined text-[16px]">
                                             visibility
@@ -756,7 +922,7 @@ function QueueTable({
 
 function EmptyQueue({ hasFilter, onReset }: { hasFilter: boolean; onReset: () => void }) {
     return (
-        <section className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-outline-variant bg-surface-container-lowest px-space-lg py-16 text-center">
+        <section className="flex flex-col items-center justify-center rounded-xl border border-dashed border-outline-variant bg-surface-container-lowest px-space-lg py-16 text-center">
             <span className="material-symbols-outlined text-[48px] text-outline-variant">
                 inbox
             </span>
@@ -765,14 +931,14 @@ function EmptyQueue({ hasFilter, onReset }: { hasFilter: boolean; onReset: () =>
             </h2>
             <p className="mt-1 max-w-md font-body-md text-body-md text-on-surface-variant">
                 {hasFilter
-                    ? 'Coba ubah kata kunci pencarian atau filter dokter.'
+                    ? 'Coba ubah kata kunci pencarian atau filter yang dipilih.'
                     : 'Resep baru dari dokter akan muncul di sini secara otomatis.'}
             </p>
             {hasFilter && (
                 <button
                     type="button"
                     onClick={onReset}
-                    className="mt-space-md inline-flex items-center gap-1.5 rounded-xl bg-primary px-space-md py-2 font-label-md text-label-md font-semibold text-on-primary transition-colors hover:bg-primary/90"
+                    className="mt-space-md inline-flex items-center gap-1.5 rounded-lg bg-primary-container px-space-md py-2 font-label-md text-label-md font-semibold text-on-primary transition-colors hover:bg-primary"
                 >
                     <span className="material-symbols-outlined text-[18px]">filter_alt_off</span>
                     Reset Filter
@@ -825,6 +991,16 @@ function DetailDrawer({ item, onClose }: { item: QueueItem; onClose: () => void 
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-space-lg py-space-md">
+                    <div className="mb-space-md flex items-start gap-2 rounded-xl bg-surface-container px-3 py-2.5 text-on-surface-variant">
+                        <span className="material-symbols-outlined text-[18px] text-primary">
+                            info
+                        </span>
+                        <p className="font-label-sm text-label-sm">
+                            Proses telaah, perubahan status, dan konfirmasi serah terima dilakukan
+                            dari halaman Antrean Resep.
+                        </p>
+                    </div>
+
                     <section className="grid gap-space-sm sm:grid-cols-2">
                         <div className="rounded-xl bg-surface-container-low p-space-sm">
                             <p className="font-label-sm text-label-sm font-semibold tracking-wide text-outline uppercase">
@@ -997,16 +1173,16 @@ function DetailDrawer({ item, onClose }: { item: QueueItem; onClose: () => void 
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-xl border border-outline-variant/70 px-space-md py-2 font-label-md text-label-md font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-high"
+                        className="rounded-lg border border-outline-variant/70 px-space-md py-2 font-label-md text-label-md font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-high"
                     >
                         Tutup
                     </button>
                     <Link
-                        href="/farmasi/antrean-resep"
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-space-md py-2 font-label-md text-label-md font-semibold text-on-primary transition-colors hover:bg-primary/90"
+                        href={`/farmasi/antrean-resep/${item.id}`}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary-container px-space-md py-2 font-label-md text-label-md font-semibold text-on-primary transition-colors hover:bg-primary"
                     >
-                        <span className="material-symbols-outlined text-[18px]">queue</span>
-                        Buka Antrean Resep
+                        <span className="material-symbols-outlined text-[18px]">open_in_new</span>
+                        Buka Proses Resep
                     </Link>
                 </div>
             </aside>

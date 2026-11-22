@@ -13,22 +13,10 @@ export default function Footer() {
                 </div>
 
                 <div className="flex items-center gap-6 text-xs font-semibold text-slate-600">
-                    <Link href="/" className="transition-colors hover:text-brand-600">
-                        Beranda
-                    </Link>
-                    <a href="#resep" className="transition-colors hover:text-brand-600">
-                        Resep Digital
-                    </a>
-                    <a href="#stok-obat" className="transition-colors hover:text-brand-600">
-                        Stok Obat
-                    </a>
-                    <Link href="/login" className="transition-colors hover:text-brand-600">
-                        Login
-                    </Link>
                 </div>
 
                 <div className="text-xs text-slate-400">
-                    © 2025 SIMPRESO. All rights reserved.
+                    © 2026 SIMPRESO. All rights reserved.
                 </div>
             </div>
         </footer>

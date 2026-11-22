@@ -4,9 +4,13 @@ namespace App\Services;
 
 use App\Enums\StockMovementType;
 use App\Models\Medicine;
+use App\Models\Prescription;
+use App\Models\PrescriptionItem;
 use App\Models\StockBatch;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class StockService
 {
@@ -113,6 +117,79 @@ class StockService
             $deduct = min($batch->quantity, $remaining);
             $batch->decrement('quantity', $deduct);
             $remaining -= $deduct;
+        }
+    }
+
+    /**
+     * Dispense prescription items: deduct medicine stock and consume batches (FEFO),
+     * and record outgoing stock movements. Must be called inside a DB transaction.
+     *
+     * @param  Collection<int, PrescriptionItem>  $items
+     *
+     * @throws ValidationException
+     */
+    public function dispenseForPrescription(Prescription $prescription, Collection $items, User $pharmacist): void
+    {
+        foreach ($items as $item) {
+            $medicine = Medicine::query()
+                ->whereKey($item->medicine_id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($medicine === null) {
+                throw ValidationException::withMessages([
+                    'stock' => 'Obat pada resep tidak ditemukan. Serah terima dibatalkan.',
+                ]);
+            }
+
+            $required = (int) $item->quantity;
+
+            if ($required < 1) {
+                continue;
+            }
+
+            $available = (int) $medicine->stock;
+
+            if ($available < $required) {
+                throw ValidationException::withMessages([
+                    'stock' => 'Stok '.$medicine->name.' tidak mencukupi (tersedia '.$available.', dibutuhkan '.$required.'). Serah terima dibatalkan.',
+                ]);
+            }
+
+            $medicine->decrement('stock', $required);
+
+            $remaining = $required;
+            $batches = $medicine->batches()
+                ->where('quantity', '>', 0)
+                ->orderByRaw('expired_at IS NULL')
+                ->orderBy('expired_at')
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($batches as $batch) {
+                if ($remaining <= 0) {
+                    break;
+                }
+
+                $deduct = min((int) $batch->quantity, $remaining);
+                $batch->decrement('quantity', $deduct);
+                $remaining -= $deduct;
+            }
+
+            if ($remaining > 0) {
+                throw ValidationException::withMessages([
+                    'stock' => 'Batch stok '.$medicine->name.' tidak mencukupi untuk jumlah yang diserahkan. Periksa data stok.',
+                ]);
+            }
+
+            $medicine->stockMovements()->create([
+                'type' => StockMovementType::Keluar,
+                'quantity' => $required,
+                'prescription_id' => $prescription->getKey(),
+                'user_id' => $pharmacist->getKey(),
+                'note' => 'Serah terima resep '.$prescription->number,
+            ]);
         }
     }
 }

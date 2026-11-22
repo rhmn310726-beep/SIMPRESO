@@ -7,6 +7,24 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Import Dataset Awal (SIMPRESO)
+
+Dataset pasien dan obat tersedia dalam format CSV di `database/data/`. Jalankan perintah berikut dari folder `SIMPRESO/`:
+
+```bash
+# Pratinjau tanpa menulis ke database
+php artisan import:patients database/data/dataset_data_pasien.csv --dry-run
+php artisan import:medicines database/data/dataset_data_obat.csv --dry-run
+
+# Impor sungguhan (idempotent: data dengan No. RM / kode obat yang sama akan dilewati)
+php artisan import:patients database/data/dataset_data_pasien.csv
+php artisan import:medicines database/data/dataset_data_obat.csv
+```
+
+- `import:patients` juga mencatat alergi pasien dari kolom riwayat alergi; usia dipakai untuk menghitung tanggal lahir bila kolom tanggal lahir kosong.
+- `import:medicines` membuat batch stok awal untuk setiap obat baru dan memetakan status "Ditangguhkan" menjadi `nonaktif`.
+- Kedua command menerima header berbahasa Indonesia maupun Inggris (lihat `COLUMN_ALIASES`), dan delimiter bisa dipaksa dengan `--delimiter=;`.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

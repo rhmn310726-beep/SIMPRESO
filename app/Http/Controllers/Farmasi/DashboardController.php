@@ -69,12 +69,12 @@ class DashboardController extends Controller
             ])
             ->when($search !== '', function (Builder $query) use ($search): void {
                 $query->where(function (Builder $query) use ($search): void {
-                    $query->where('number', 'like', "%{$search}%")
+                    $query->whereLike('number', "%{$search}%")
                         ->orWhereHas('patient', function (Builder $query) use ($search): void {
-                            $query->where('name', 'like', "%{$search}%")
-                                ->orWhere('medical_record_number', 'like', "%{$search}%");
+                            $query->whereLike('name', "%{$search}%")
+                                ->orWhereLike('medical_record_number', "%{$search}%");
                         })
-                        ->orWhereHas('doctor', fn (Builder $query) => $query->where('name', 'like', "%{$search}%"));
+                        ->orWhereHas('doctor', fn (Builder $query) => $query->whereLike('name', "%{$search}%"));
                 });
             })
             ->when($doctorId !== null, fn (Builder $query) => $query->where('doctor_id', $doctorId))
